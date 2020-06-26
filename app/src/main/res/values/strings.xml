@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Strhack</string>
+    <string name="tab_text_1">Tab 1</string>
+    <string name="tab_text_2">Tab 2</string>
+    <string name="start_recording">Inizia</string>
+    <string name="stop_recording">Ferma</string>
+    <string name="center_map">Centra</string>
+</resources>
