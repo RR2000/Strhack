@@ -1,4 +1,4 @@
-package com.rondinella.strhack
+package com.rondinella.strhack.activities
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -7,13 +7,11 @@ import android.os.Bundle
 import com.google.android.material.tabs.TabLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.view.get
 import androidx.fragment.app.FragmentActivity
-import androidx.preference.PreferenceManager
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayoutMediator
+import com.rondinella.strhack.R
 import com.rondinella.strhack.ui.main.SectionsPagerAdapter
-import org.osmdroid.config.Configuration
 
 
 class MainActivity : AppCompatActivity() {

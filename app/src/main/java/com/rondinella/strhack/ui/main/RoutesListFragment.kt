@@ -1,14 +1,17 @@
 package com.rondinella.strhack.ui.main
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.TextView
+import androidx.core.view.get
 import androidx.fragment.app.Fragment
 import com.example.strhack.AdvancedGeoPoint
 import com.rondinella.strhack.R
+import com.rondinella.strhack.activities.CourseViewerActivity
 import kotlinx.android.synthetic.main.fragment_routeslist.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.Main
@@ -48,9 +51,11 @@ class RoutesListFragment : Fragment() {
         id_gpx_list.adapter = adapter
 
         id_gpx_list.setOnItemClickListener { adapterView, v, i, l ->
-            CoroutineScope(Main).launch {
-                TODO("Quando clicchi su un elemento si apre una nuova activity")
+            val intent = Intent(context, CourseViewerActivity::class.java).apply {
+                putExtra("filename", routeNames[i])
             }
+            startActivity(intent)
+
         }
     }
 
