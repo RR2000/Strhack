@@ -3,6 +3,8 @@ package com.example.strhack
 import android.content.Context
 import android.graphics.Color
 import android.util.Log
+import androidx.lifecycle.LiveData
+import com.rondinella.strhack.livedata.currentTrackPositionData
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
@@ -48,9 +50,12 @@ class GpxFileWriter(context: Context) {
 
     fun addPoint(long: String, lat: String, time: String, alt: String){
         if(!closed) {
+            val point = GeoPoint(lat.toDouble(),long.toDouble())
+
+            currentTrackPositionData.changeCurrentPosition(point)
             //map_view.overlayManager.remove(line)
 
-            line.addPoint(GeoPoint(lat.toDouble(),long.toDouble()))
+            line.addPoint(point)
 
             //map_view.overlayManager.add(line)
 

@@ -4,6 +4,7 @@ package com.rondinella.strhack.ui.main
 import android.app.ActivityManager
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.os.Build
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
@@ -16,6 +17,7 @@ import android.widget.Toast
 import androidx.core.view.get
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceManager
 import androidx.viewpager2.widget.ViewPager2
 import com.example.strhack.AdvancedGeoPoint
@@ -25,16 +27,19 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.rondinella.strhack.R
+import com.rondinella.strhack.livedata.currentTrackPositionData
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_main.view.*
 import kotlinx.android.synthetic.main.fragment_newtrack.*
 import org.osmdroid.api.IMapController
 import org.osmdroid.config.Configuration
 import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.util.*
+import kotlin.reflect.typeOf
 
 /**
  * A placeholder fragment containing a simple view.
@@ -90,12 +95,40 @@ class NewTrackFragment: Fragment() {
             false
         }
 
+        val trackLine = Polyline()
+
         id_start.setOnClickListener {
-            context!!.startService(Intent(context, TrackerService().javaClass))
+            activity!!.startService(Intent(context, TrackerService().javaClass))
+
+            currentTrackPositionData.currentPosition.observe(this, androidx.lifecycle.Observer {point :GeoPoint->
+
+                mapController.setZoom(20.0)
+                mapController.animateTo(point)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    id_map.overlayManager.removeIf {
+                        it is Polyline
+                    }
+                }else{
+                    id_map.overlayManager.clear()
+                }
+                trackLine.addPoint(point)
+                id_map.overlayManager.add(trackLine)
+
+            })
+
         }
 
         id_stop.setOnClickListener {
-            context!!.stopService(Intent(context, TrackerService().javaClass))
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                id_map.overlayManager.removeIf {
+                    it is Polyline
+                }
+            }else{
+                id_map.overlayManager.clear()
+            }
+
+            activity!!.stopService(Intent(context, TrackerService().javaClass))
         }
 
     }

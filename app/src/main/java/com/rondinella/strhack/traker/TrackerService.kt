@@ -117,16 +117,11 @@ class TrackerService : Service() {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_SERVICE)
                 .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
-                //.setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.mipmap.ic_launcher)
         } catch (e: Exception) {
             e.printStackTrace()
         }
         return null
     }
-
-    // Defines a custom Intent action
-    val BROADCAST_ACTION = "com.example.android.threadsample.BROADCAST"
-    // Defines the key for the status "extra" in an Intent
-    val EXTENDED_DATA_STATUS = "com.example.android.threadsample.STATUS"
 
 }
