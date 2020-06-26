@@ -33,6 +33,7 @@ import kotlinx.android.synthetic.main.activity_main.view.*
 import kotlinx.android.synthetic.main.fragment_newtrack.*
 import org.osmdroid.api.IMapController
 import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
@@ -129,6 +130,16 @@ class NewTrackFragment: Fragment() {
             }
 
             activity!!.stopService(Intent(context, TrackerService().javaClass))
+        }
+
+        id_centra.setOnClickListener{
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { location->
+                    if (location != null) {
+                        mapController.animateTo(GeoPoint(location.latitude, location.longitude))
+                        mapController.setZoom(20.0)
+                    }
+                }
         }
 
     }

@@ -68,10 +68,15 @@ class MainActivity : AppCompatActivity() {
         val sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, FragmentActivity().lifecycle)
         //set the adapter to the viewPage
         viewPager.adapter = sectionsPagerAdapter
+
+        //Array of tab titles
+        val titles = ArrayList<String>()
+        titles.add(getString(R.string.new_course)) //Tab 0
+        titles.add(getString(R.string.my_courses)) //Tab 1
         //Match each tab with a fragment
         val tabs: TabLayout = findViewById(R.id.tabs)
         TabLayoutMediator(tabs, viewPager) { tab, position ->
-            tab.text = position.toString()
+            tab.text = titles[position]
             viewPager.setCurrentItem(tab.position, true)
         }.attach()
         //Used to prevent blank map when go back from other fragment.
