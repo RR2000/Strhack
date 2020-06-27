@@ -7,4 +7,6 @@
     <string name="center_map">Centra</string>
     <string name="new_course">Nuovo giro</string>
     <string name="my_courses">I miei giri</string>
+    <string name="blank_map">Semplice</string>
+    <string name="altitude_map">Altitudine</string>
 </resources>

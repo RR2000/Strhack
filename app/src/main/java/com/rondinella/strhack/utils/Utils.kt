@@ -9,6 +9,7 @@ import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.xml.parsers.DocumentBuilderFactory
+import kotlin.collections.ArrayList
 
 
 fun convertLongToTime(time: Long): String {
@@ -45,7 +46,7 @@ fun readGeoPoints(file: File): List<GeoPoint> {
 }
 
 //It converts a GPX file into a list of AdvancedGeoPoints
-fun readAdvencedGeoPoints(file: File): List<AdvancedGeoPoint> {
+fun readAdvencedGeoPoints(file: File): ArrayList<AdvancedGeoPoint> {
     val xmlDoc: Document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file)
     xmlDoc.documentElement.normalize()
 

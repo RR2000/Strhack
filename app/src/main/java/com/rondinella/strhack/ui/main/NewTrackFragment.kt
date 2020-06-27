@@ -1,9 +1,9 @@
-
 package com.rondinella.strhack.ui.main
 
 import android.app.ActivityManager
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.location.Geocoder
 import android.os.Build
 import android.os.Bundle
 import android.os.Looper
@@ -22,6 +22,7 @@ import androidx.preference.PreferenceManager
 import androidx.viewpager2.widget.ViewPager2
 import com.example.strhack.AdvancedGeoPoint
 import com.example.strhack.TrackerService
+import com.example.strhack.readAdvencedGeoPoints
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -46,9 +47,10 @@ import kotlin.reflect.typeOf
  * A placeholder fragment containing a simple view.
  */
 @Suppress("DEPRECATION")
-class NewTrackFragment: Fragment() {
+class NewTrackFragment : Fragment() {
 
     lateinit var fusedLocationClient: FusedLocationProviderClient
+    var courseLine = Polyline()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -69,7 +71,7 @@ class NewTrackFragment: Fragment() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
 
         //Create a new overlay with my position that has to be placed on the map
-        val overlayLocation = MyLocationNewOverlay(GpsMyLocationProvider(requireContext()),id_map)
+        val overlayLocation = MyLocationNewOverlay(GpsMyLocationProvider(requireContext()), id_map)
         overlayLocation.enableMyLocation()
         id_map.overlays.add(overlayLocation)
 
@@ -96,48 +98,31 @@ class NewTrackFragment: Fragment() {
             false
         }
 
-        val trackLine = Polyline()
-
         id_start.setOnClickListener {
             activity!!.startService(Intent(context, TrackerService().javaClass))
 
-            currentTrackPositionData.currentPosition.observe(this, androidx.lifecycle.Observer {point :GeoPoint->
-
-                mapController.setZoom(20.0)
-                mapController.animateTo(point)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    id_map.overlayManager.removeIf {
-                        it is Polyline
-                    }
-                }else{
-                    id_map.overlayManager.clear()
-                }
-                trackLine.addPoint(point)
-                id_map.overlayManager.add(trackLine)
-
+            currentTrackPositionData.currentPosition.observe(this, androidx.lifecycle.Observer { point: GeoPoint ->
+                id_map.overlayManager.remove(courseLine)
+                courseLine.addPoint(point)
+                id_map.overlayManager.add(courseLine)
             })
 
         }
 
         id_stop.setOnClickListener {
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                id_map.overlayManager.removeIf {
-                    it is Polyline
-                }
-            }else{
-                id_map.overlayManager.clear()
-            }
-
+            id_map.overlayManager.remove(courseLine)
+            courseLine = Polyline()
             activity!!.stopService(Intent(context, TrackerService().javaClass))
         }
 
-        id_centra.setOnClickListener{
+        id_centra.setOnClickListener {
             fusedLocationClient.lastLocation
-                .addOnSuccessListener { location->
+                .addOnSuccessListener { location ->
                     if (location != null) {
-                        mapController.animateTo(GeoPoint(location.latitude, location.longitude))
-                        mapController.setZoom(20.0)
+                        id_map.mapOrientation = 0.0f
+                        id_map.controller.animateTo(GeoPoint(location.latitude, location.longitude))
+                        id_map.controller.setZoom(20.0)
                     }
                 }
         }
@@ -147,6 +132,7 @@ class NewTrackFragment: Fragment() {
     override fun onResume() {
         super.onResume()
         Configuration.getInstance().load(requireContext(), PreferenceManager.getDefaultSharedPreferences(requireContext()))
+        id_map.overlayManager.remove(courseLine)
         id_map.onResume()
 
     }
@@ -160,6 +146,7 @@ class NewTrackFragment: Fragment() {
     //I don't know what this method does... I know I shouldn't delete it
     companion object {
         private const val ARG_SECTION_NUMBER = "section_number"
+
         @JvmStatic
         fun newInstance(sectionNumber: Int): NewTrackFragment {
             return NewTrackFragment().apply {
