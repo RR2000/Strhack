@@ -37,6 +37,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/id_map_gpxViewer" />
 
+    <Button
+        android:id="@+id/button_slope"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="@string/slope_map"
+        app:layout_constraintEnd_toStartOf="@+id/button_altitude"
+        app:layout_constraintStart_toEndOf="@+id/button_blankMap"
+        app:layout_constraintTop_toBottomOf="@+id/id_map_gpxViewer" />
+
     <ProgressBar
         android:id="@+id/loading_course_circle"
         android:layout_width="wrap_content"

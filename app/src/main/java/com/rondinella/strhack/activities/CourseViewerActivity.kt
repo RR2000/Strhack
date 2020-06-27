@@ -3,6 +3,7 @@ package com.rondinella.strhack.activities
 import android.graphics.Color
 import android.graphics.Paint
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
@@ -20,6 +21,7 @@ import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.abs
+import kotlin.math.min
 
 @Suppress("DEPRECATION")
 class CourseViewerActivity : AppCompatActivity() {
@@ -55,7 +57,18 @@ class CourseViewerActivity : AppCompatActivity() {
                 val longitudeSpan = abs(course.farEastPoint().longitude - course.farWestPoint().longitude)
                 val multiplier = 1//0.40
                 id_map_gpxViewer.controller.animateTo(course.centerPoint())
-                id_map_gpxViewer.controller.zoomToSpan(latitudeSpan*multiplier, longitudeSpan*multiplier)
+                id_map_gpxViewer.controller.zoomToSpan(latitudeSpan * multiplier, longitudeSpan * multiplier)
+            }
+        }
+        button_blankMap.setOnClickListener {
+            CoroutineScope(Main).launch {
+                drawBlankMap(course, id_map_gpxViewer, loading_course_circle)
+            }
+        }
+
+        button_slope.setOnClickListener {
+            CoroutineScope(Main).launch {
+                drawSlopeMap(course, id_map_gpxViewer, loading_course_circle)
             }
         }
 
@@ -65,11 +78,6 @@ class CourseViewerActivity : AppCompatActivity() {
             }
         }
 
-        button_blankMap.setOnClickListener {
-            CoroutineScope(Main).launch {
-                drawBlankMap(course, id_map_gpxViewer, loading_course_circle)
-            }
-        }
     }
 
     suspend fun drawBlankMap(course: Course, map: MapView, loadingCourseCircle: ProgressBar) {
@@ -102,6 +110,8 @@ class CourseViewerActivity : AppCompatActivity() {
         val maxAltitude = course.maxAltitude()
         val minAltitude = course.minAltitude()
 
+        Log.w("MAX",maxAltitude.toString())
+
         map.visibility = View.INVISIBLE
         loadingCourseCircle.visibility = View.VISIBLE
 
@@ -111,9 +121,64 @@ class CourseViewerActivity : AppCompatActivity() {
                 seg.addPoint(course.geoPoints()[i - 1])
                 seg.addPoint(course.geoPoints()[i])
 
-                val colorModifier: Int = (((255) * ((course.geoPoints()[i - 1].altitude - minAltitude) / maxAltitude)).toInt())
+                var colorModifier: Int = (((course.geoPoints()[i].altitude - minAltitude) / (maxAltitude - minAltitude)) * 255.0).toInt()
+
+                Log.w("colorMod",colorModifier.toString())
+                Log.w("TEST ONE","${course.geoPoints()[i].altitude - minAltitude}/${(maxAltitude - minAltitude)}")
+
+                if(colorModifier>255)
+                    colorModifier = 255
 
                 seg.outlinePaint.color = Color.rgb(colorModifier, 255 - colorModifier, 0)
+                seg.outlinePaint.strokeCap = Paint.Cap.ROUND
+                withContext(Main) {
+                    map.overlayManager.add(seg)
+                }
+            }
+        }
+
+        map.visibility = View.VISIBLE
+        loadingCourseCircle.visibility = View.INVISIBLE
+    }
+
+    suspend fun drawSlopeMap(course: Course, map: MapView, loadingCourseCircle: ProgressBar) {
+        map.overlayManager.clear()
+
+        map.visibility = View.INVISIBLE
+        loadingCourseCircle.visibility = View.VISIBLE
+
+        withContext(Default) {
+            for (i in 0 until course.geoPoints().size step 10) {
+                val seg = Polyline()
+                Log.w("PUNTI", "${i}-esimi punti")
+
+                for (j in 0 until 11)
+                    if (i + j < course.geoPoints().size)
+                        seg.addPoint(course.geoPoints()[i + j])
+
+                val distance = seg.actualPoints.first().distanceToAsDouble(seg.actualPoints.last())
+                val altitude = seg.actualPoints.first().altitude - seg.actualPoints.last().altitude
+                val slope = altitude / distance * 100
+
+                var colorModifier = ((slope / 100.0) * 255.0 * 3.5).toInt()
+
+                if (colorModifier < -255)
+                    colorModifier = -255
+                if (colorModifier > 255)
+                    colorModifier = 255
+
+
+
+                Log.w("SLOPE", "$slope")
+
+                if (slope >= 0)
+                    seg.outlinePaint.color = Color.rgb(colorModifier, 255 - colorModifier, 0)
+                else {
+                    colorModifier = abs(colorModifier)
+                    seg.outlinePaint.color = Color.rgb(0, 255 - colorModifier, colorModifier)
+                }
+
+
                 seg.outlinePaint.strokeCap = Paint.Cap.ROUND
                 withContext(Main) {
                     map.overlayManager.add(seg)

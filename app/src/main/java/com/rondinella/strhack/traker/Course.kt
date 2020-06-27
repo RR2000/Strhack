@@ -25,7 +25,7 @@ class Course(pathFile: String) {
     private var farSouthPoint = GeoPoint(90.0,0.0)
     private var farWestPoint = GeoPoint(0.0,180.0)
     private var farEastPoint = GeoPoint(0.0, -180.0)
-    private var highestPoint = GeoPoint(0.0,0.0,5000.0)
+    private var highestPoint = GeoPoint(0.0,0.0,-5000.0)
     private var lowestPoint = GeoPoint(0.0,0.0,5000.0)
     private lateinit var centralPoint: GeoPoint
 
@@ -104,9 +104,9 @@ class Course(pathFile: String) {
                     farEastPoint = lastGeoPoint
                 if(lastGeoPoint.longitude < farWestPoint.longitude)
                     farWestPoint = lastGeoPoint
-                if (altitude < lowestPoint.altitude)
+                if (lastGeoPoint.altitude < lowestPoint.altitude)
                     lowestPoint = lastGeoPoint
-                else if (altitude > highestPoint.latitude)
+                if (lastGeoPoint.altitude > highestPoint.altitude)
                     highestPoint = lastGeoPoint
 
             }
