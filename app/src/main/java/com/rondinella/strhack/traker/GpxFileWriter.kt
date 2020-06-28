@@ -2,13 +2,16 @@ package com.rondinella.strhack.traker
 
 import android.content.Context
 import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import com.example.strhack.convertLongToTime
-import com.rondinella.strhack.livedata.currentTrackPositionData
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.overlay.Polyline
 import java.io.File
 import java.lang.Exception
 import java.util.*
+import kotlin.collections.ArrayList
 
 class GpxFileWriter(context: Context) {
     private val tracksLocation = File(context.getExternalFilesDir(null).toString() + "/tracks")
@@ -52,9 +55,8 @@ class GpxFileWriter(context: Context) {
         if (!closed) {
             val point = GeoPoint(lat.toDouble(), long.toDouble())
 
-            currentTrackPositionData.changeCurrentPosition(point)
             line.addPoint(point)
-
+            WrittenPolylineData.refreshPolyline(line)
 
             trackFile.appendText(
                 """
@@ -84,5 +86,18 @@ class GpxFileWriter(context: Context) {
         closed = true
         //map_view.overlayManager.remove(line)
         trackFile.appendText("</trk>\n</gpx>")
+    }
+
+    object WrittenPolylineData: ViewModel() {
+
+        private val polyline =  MutableLiveData<Polyline>()
+
+        fun getPolyline(): LiveData<Polyline>{
+            return polyline
+        }
+
+        fun refreshPolyline(polyline: Polyline){
+            this.polyline.value = polyline
+        }
     }
 }

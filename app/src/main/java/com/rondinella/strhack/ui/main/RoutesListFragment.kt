@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment
 import com.example.strhack.AdvancedGeoPoint
 import com.rondinella.strhack.R
 import com.rondinella.strhack.activities.CourseViewerActivity
+import com.rondinella.strhack.traker.Course
 import kotlinx.android.synthetic.main.fragment_routeslist.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.Main

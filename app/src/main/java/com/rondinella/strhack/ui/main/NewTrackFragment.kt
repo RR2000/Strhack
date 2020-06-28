@@ -30,7 +30,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.rondinella.strhack.R
 import com.rondinella.strhack.activities.MainActivity
-import com.rondinella.strhack.livedata.currentTrackPositionData
+import com.rondinella.strhack.traker.GpxFileWriter
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_main.view.*
 import kotlinx.android.synthetic.main.fragment_newtrack.*
@@ -44,6 +44,7 @@ import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.util.*
 import java.util.jar.Manifest
+import kotlin.collections.ArrayList
 import kotlin.reflect.typeOf
 
 /**
@@ -106,11 +107,18 @@ class NewTrackFragment : Fragment() {
 
             activity!!.startService(Intent(context, TrackerService().javaClass))
 
+            GpxFileWriter.WrittenPolylineData.getPolyline().observe(this, androidx.lifecycle.Observer { polyline ->
+                id_map.overlayManager.remove(courseLine)
+                courseLine = polyline
+                id_map.overlayManager.add(courseLine)
+            })
+
+            /*
             currentTrackPositionData.currentPosition.observe(this, androidx.lifecycle.Observer { point: GeoPoint ->
                 id_map.overlayManager.remove(courseLine)
                 courseLine.addPoint(point)
                 id_map.overlayManager.add(courseLine)
-            })
+            })*/
 
         }
 
@@ -141,6 +149,7 @@ class NewTrackFragment : Fragment() {
         super.onResume()
         Configuration.getInstance().load(requireContext(), PreferenceManager.getDefaultSharedPreferences(requireContext()))
         id_map.overlayManager.remove(courseLine)
+
         id_map.onResume()
 
     }
