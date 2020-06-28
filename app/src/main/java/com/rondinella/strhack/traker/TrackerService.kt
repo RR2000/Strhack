@@ -11,11 +11,9 @@ import android.os.IBinder
 import android.os.Looper
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
-import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.location.*
 import com.rondinella.strhack.R
-import com.rondinella.strhack.ui.main.NewTrackFragment
-import org.osmdroid.views.MapView
+import com.rondinella.strhack.traker.GpxFileWriter
 
 class TrackerService : Service() {
 
@@ -28,29 +26,28 @@ class TrackerService : Service() {
     val CHANNEL_ID_NAME = "CHANNEL_ID_NAME"
 
 
-    lateinit var track:GpxFileWriter
+    lateinit var track: GpxFileWriter
 
     override fun onCreate() {
 
-        track = GpxFileWriter(applicationContext)
-
         try {
-            if (Build.VERSION.SDK_INT >= 26) {
+            track = GpxFileWriter(applicationContext)
+            notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val channel = NotificationChannel(
                     CHANNEL_ID, CHANNEL_ID_NAME,
                     NotificationManager.IMPORTANCE_HIGH
                 )
                 channel.setSound(null, null)
                 channel.setShowBadge(false)
-                notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 notificationManager.deleteNotificationChannel(CHANNEL_ID)
                 notificationManager.createNotificationChannel(channel)
-                var notification = createNotification(applicationContext, CHANNEL_ID, 0)
-                if (notification == null) {
-                    notification = NotificationCompat.Builder(this, CHANNEL_ID)
-                }
-                startForeground(NOTIFICATION_ID, notification.build())
             }
+            var notification = createNotification(applicationContext, CHANNEL_ID, 0)
+            if (notification == null) {
+                notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            }
+            startForeground(NOTIFICATION_ID, notification.build())
         } catch (e: java.lang.Exception) {
             e.printStackTrace()
         }
@@ -72,7 +69,7 @@ class TrackerService : Service() {
                         .setSmallIcon(R.mipmap.ic_launcher_round)
                     notificationManager.notify(NOTIFICATION_ID, builder.build())
 
-                    track.addPoint(location.longitude.toString(), location.latitude.toString(), location.time.toString(), location.altitude.toString())
+                    track.addPoint(location.longitude.toString(), location.latitude.toString(), location.time.toString(), location.altitude.toString(), null,null)
 
                 }
             }
@@ -98,7 +95,7 @@ class TrackerService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             notificationManager.deleteNotificationChannel(CHANNEL_ID)
         }
-        Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show()
+
     }
 
 

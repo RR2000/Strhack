@@ -1,35 +1,34 @@
-package com.example.strhack
+package com.rondinella.strhack.traker
 
 import android.content.Context
-import android.graphics.Color
 import android.util.Log
-import androidx.lifecycle.LiveData
+import com.example.strhack.convertLongToTime
 import com.rondinella.strhack.livedata.currentTrackPositionData
 import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
 import java.io.File
 import java.lang.Exception
 import java.util.*
 
 class GpxFileWriter(context: Context) {
-    var TRACKS_LOCATION = File(context.getExternalFilesDir(null).toString() + "/tracks")
-    var closed = false
-    lateinit var trackFile: File
-    lateinit var filename: String
+    private val tracksLocation = File(context.getExternalFilesDir(null).toString() + "/tracks")
+    private var closed = false
+    private lateinit var trackFile: File
+    private lateinit var filename: String
 
     var line = Polyline()
 
     init {
         try {
-           filename = convertLongToTime(Date().time) + ".gpx"
+            filename = convertLongToTime(Date().time).replace(":", ".") + ".gpx"
+            Log.w("FILENAME", filename)
 
-            while(!TRACKS_LOCATION.exists()){ //SECONDO ME CI VA UN IF
-                TRACKS_LOCATION.mkdir()
+            while (!tracksLocation.exists()) { //SECONDO ME CI VA UN IF
+                tracksLocation.mkdir()
             }
-            File(TRACKS_LOCATION, filename).createNewFile()
-            trackFile = File(TRACKS_LOCATION, filename) //VORREI FARE UN FILE PARZIALE
+
+            File(tracksLocation, filename).createNewFile()
+            trackFile = File(tracksLocation, filename) //VORREI FARE UN FILE PARZIALE
 
             trackFile.appendText(
                 """
@@ -42,36 +41,46 @@ class GpxFileWriter(context: Context) {
             
             """.trimIndent()
             )
+
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
     }
 
-    fun addPoint(long: String, lat: String, time: String, alt: String){
-        if(!closed) {
-            val point = GeoPoint(lat.toDouble(),long.toDouble())
+    fun addPoint(long: String, lat: String, time: String, alt: String, temp: Double?, hr: Int?) {
+        if (!closed) {
+            val point = GeoPoint(lat.toDouble(), long.toDouble())
 
             currentTrackPositionData.changeCurrentPosition(point)
-            //map_view.overlayManager.remove(line)
-
             line.addPoint(point)
 
-            //map_view.overlayManager.add(line)
 
             trackFile.appendText(
                 """
-            <trkpt lat="${lat}" lon="${long}">
+            <trkpt lat="$lat" lon="$long">
                 <ele>${alt}</ele>
                 <time>${convertLongToTime(time.toLong())}</time>
-            </trkpt>
-            
-        """.trimIndent()
+                
+                """.trimIndent()
             )
+
+            if(temp != null || hr != null)
+            {
+                trackFile.appendText("<extensions>\n\t\t<gpxtpx:TrackPointExtension>\n")
+                if(temp != null)
+                    trackFile.appendText("\t\t\t<gpxtpx:atemp>$temp</gpxtpx:atemp>\n")
+                if(hr != null)
+                    trackFile.appendText("\t\t\t<gpxtpx:hr>$hr</gpxtpx:hr>\n")
+
+                trackFile.appendText("\t\t</gpxtpx:TrackPointExtension>\n\t</extensions>")
+            }
+
+            trackFile.appendText("\n</trkpt>\n")
         }
     }
 
-    fun close(){
+    fun close() {
         closed = true
         //map_view.overlayManager.remove(line)
         trackFile.appendText("</trk>\n</gpx>")

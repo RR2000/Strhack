@@ -16,52 +16,29 @@ import com.rondinella.strhack.ui.main.SectionsPagerAdapter
 
 class MainActivity : AppCompatActivity() {
 
-    private fun requestPermissions() {
-        ActivityCompat.requestPermissions(
-            this,
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.INTERNET,
-                Manifest.permission.ACCESS_NETWORK_STATE,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                Manifest.permission.READ_EXTERNAL_STORAGE
-            ),
-            42
-        )
+    private fun managePermissions() {
+        val permissionsArray = arrayListOf<String>()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(
-                    Manifest.permission.FOREGROUND_SERVICE
-                ),
-                42
-            )
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            permissionsArray.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        permissionsArray.add(Manifest.permission.ACCESS_FINE_LOCATION)
+        permissionsArray.add(Manifest.permission.INTERNET)
+        permissionsArray.add(Manifest.permission.ACCESS_NETWORK_STATE)
+        permissionsArray.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        permissionsArray.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+            permissionsArray.add(Manifest.permission.FOREGROUND_SERVICE)
+
+        var i = 0
+        while(i < permissionsArray.size) {
+            if (ActivityCompat.checkSelfPermission(this, permissionsArray[i]) == PackageManager.PERMISSION_GRANTED)
+                permissionsArray.removeAt(i)
+
+            i++
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(
-                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                ),
-                42
-            )
-        }
-    }
-
-    private fun hasPermissions(): Boolean {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(this, Manifest.permission.INTERNET) == PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_NETWORK_STATE) == PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE) == PackageManager.PERMISSION_GRANTED
-        ) {
-            return true
-        }
-        return false
+        if(permissionsArray.size > 0)
+            ActivityCompat.requestPermissions(this, permissionsArray.toTypedArray(), 36)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,8 +46,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         //If the user didn't gave all permissions it asks for them again
-        if (!hasPermissions())
-            requestPermissions()
+        managePermissions()
 
         val viewPager: ViewPager2 = findViewById(R.id.view_pager)
         //create a new SectionPageAdapter for using it with viewPager
@@ -91,6 +67,5 @@ class MainActivity : AppCompatActivity() {
         }.attach()
         //Used to prevent blank map when go back from other fragment.
         viewPager.offscreenPageLimit = 1
-
     }
 }

@@ -1,5 +1,6 @@
 package com.rondinella.strhack.ui.main
 
+import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.content.Intent
 import android.content.pm.ServiceInfo
@@ -28,6 +29,7 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.rondinella.strhack.R
+import com.rondinella.strhack.activities.MainActivity
 import com.rondinella.strhack.livedata.currentTrackPositionData
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_main.view.*
@@ -41,6 +43,7 @@ import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.util.*
+import java.util.jar.Manifest
 import kotlin.reflect.typeOf
 
 /**
@@ -60,6 +63,7 @@ class NewTrackFragment : Fragment() {
         val root = inflater.inflate(R.layout.fragment_newtrack, container, false)
         return root
     }
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -99,6 +103,7 @@ class NewTrackFragment : Fragment() {
         }
 
         id_start.setOnClickListener {
+
             activity!!.startService(Intent(context, TrackerService().javaClass))
 
             currentTrackPositionData.currentPosition.observe(this, androidx.lifecycle.Observer { point: GeoPoint ->
@@ -123,6 +128,9 @@ class NewTrackFragment : Fragment() {
                         id_map.mapOrientation = 0.0f
                         id_map.controller.animateTo(GeoPoint(location.latitude, location.longitude))
                         id_map.controller.setZoom(20.0)
+
+                        id_map.visibility = View.INVISIBLE
+                        id_map.visibility = View.VISIBLE
                     }
                 }
         }
