@@ -11,7 +11,6 @@ import org.osmdroid.views.overlay.Polyline
 import java.io.File
 import java.lang.Exception
 import java.util.*
-import kotlin.collections.ArrayList
 
 class GpxFileWriter(context: Context) {
     private val tracksLocation = File(context.getExternalFilesDir(null).toString() + "/tracks")

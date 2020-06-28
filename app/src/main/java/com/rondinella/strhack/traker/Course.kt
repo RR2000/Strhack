@@ -74,72 +74,67 @@ class Course(pathFile: String) {
 
     private fun readPoints() {
         CoroutineScope(Main).launch {
-            withContext(IO) {
-                val xmlDoc: Document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(gpxFile)
-                withContext(Main) {
-                    xmlDoc.documentElement.normalize()
+            val xmlDoc: Document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(gpxFile)
+            xmlDoc.documentElement.normalize()
 
-                    val trackPointList: NodeList = xmlDoc.getElementsByTagName("trkpt")
+            val trackPointList: NodeList = xmlDoc.getElementsByTagName("trkpt")
 
-                    courseName = if (xmlDoc.getElementsByTagName("name").length > 0)
-                        xmlDoc.getElementsByTagName("name").item(0).textContent.toString()
-                    else
-                        xmlDoc.getElementsByTagName("time").item(0).textContent.toString()
+            courseName = if (xmlDoc.getElementsByTagName("name").length > 0)
+                xmlDoc.getElementsByTagName("name").item(0).textContent.toString()
+            else
+                xmlDoc.getElementsByTagName("time").item(0).textContent.toString()
 
 
-                    for (i in 0 until trackPointList.length) {
-                        val point: Node = trackPointList.item(i)
+            for (i in 0 until trackPointList.length) {
+                val point: Node = trackPointList.item(i)
 
-                        var altitude = 0.0
-                        var date = Date()
-                        val formatter: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ITALIAN)
+                var altitude = 0.0
+                var date = Date()
+                val formatter: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ITALIAN)
 
-                        for (j in 1 until point.childNodes.length) {
-                            if (point.childNodes.item(j).nodeName == "ele") {
-                                altitude = point.childNodes.item(j).textContent.toDouble()
-                            }
-                            if (point.childNodes.item(j).nodeName == "time")
-                                date = formatter.parse(point.childNodes.item(j).textContent)!!
-                        }
-
-                        geoPoints.add(
-                            AdvancedGeoPoint(
-                                date,
-                                point.attributes.getNamedItem("lat").nodeValue.toDouble(),
-                                point.attributes.getNamedItem("lon").nodeValue.toDouble(),
-                                altitude
-                            )
-                        )
-
-                        val lastGeoPoint = geoPoints.last()
-
-                        if (lastGeoPoint.latitude > farNorthPoint.latitude)
-                            farNorthPoint = lastGeoPoint
-                        if (lastGeoPoint.latitude < farSouthPoint.latitude)
-                            farSouthPoint = lastGeoPoint
-                        if (lastGeoPoint.longitude > farEastPoint.longitude)
-                            farEastPoint = lastGeoPoint
-                        if (lastGeoPoint.longitude < farWestPoint.longitude)
-                            farWestPoint = lastGeoPoint
-                        if (lastGeoPoint.altitude < lowestPoint.altitude)
-                            lowestPoint = lastGeoPoint
-                        if (lastGeoPoint.altitude > highestPoint.altitude)
-                            highestPoint = lastGeoPoint
+                for (j in 1 until point.childNodes.length) {
+                    if (point.childNodes.item(j).nodeName == "ele") {
+                        altitude = point.childNodes.item(j).textContent.toDouble()
                     }
+                    if (point.childNodes.item(j).nodeName == "time")
+                        date = formatter.parse(point.childNodes.item(j).textContent)!!
                 }
 
+                geoPoints.add(
+                    AdvancedGeoPoint(
+                        date,
+                        point.attributes.getNamedItem("lat").nodeValue.toDouble(),
+                        point.attributes.getNamedItem("lon").nodeValue.toDouble(),
+                        altitude
+                    )
+                )
 
+                val lastGeoPoint = geoPoints.last()
+
+                if (lastGeoPoint.latitude > farNorthPoint.latitude)
+                    farNorthPoint = lastGeoPoint
+                if (lastGeoPoint.latitude < farSouthPoint.latitude)
+                    farSouthPoint = lastGeoPoint
+                if (lastGeoPoint.longitude > farEastPoint.longitude)
+                    farEastPoint = lastGeoPoint
+                if (lastGeoPoint.longitude < farWestPoint.longitude)
+                    farWestPoint = lastGeoPoint
+                if (lastGeoPoint.altitude < lowestPoint.altitude)
+                    lowestPoint = lastGeoPoint
+                if (lastGeoPoint.altitude > highestPoint.altitude)
+                    highestPoint = lastGeoPoint
             }
-
-            Log.w("NORD", farNorthPoint.toDoubleString())
-            Log.w("EST", farEastPoint.toDoubleString())
-            Log.w("SUD", farSouthPoint.toDoubleString())
-            Log.w("OVEST", farWestPoint.toDoubleString())
-
-            centralPoint = GeoPoint((farNorthPoint.latitude + farSouthPoint.latitude) / 2.0, (farEastPoint.longitude + farWestPoint.longitude) / 2.0)
-
-            Log.w("CENTRAL", centralPoint.toDoubleString())
         }
 
+
+        Log.w("NORD", farNorthPoint.toDoubleString())
+        Log.w("EST", farEastPoint.toDoubleString())
+        Log.w("SUD", farSouthPoint.toDoubleString())
+        Log.w("OVEST", farWestPoint.toDoubleString())
+
+        centralPoint = GeoPoint((farNorthPoint.latitude + farSouthPoint.latitude) / 2.0, (farEastPoint.longitude + farWestPoint.longitude) / 2.0)
+
+        Log.w("CENTRAL", centralPoint.toDoubleString())
     }
+
 }

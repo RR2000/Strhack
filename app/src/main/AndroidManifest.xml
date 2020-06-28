@@ -33,7 +33,7 @@
         </activity>
 
         <service
-            android:name="com.example.strhack.TrackerService"
+            android:name=".traker.TrackerService"
             android:screenOrientation="portrait" />
     </application>
 

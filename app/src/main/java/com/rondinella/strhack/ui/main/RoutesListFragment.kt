@@ -6,23 +6,18 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
-import android.widget.TextView
-import androidx.core.view.get
+import android.widget.Toast
 import androidx.fragment.app.Fragment
-import com.example.strhack.AdvancedGeoPoint
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.rondinella.strhack.R
 import com.rondinella.strhack.activities.CourseViewerActivity
-import com.rondinella.strhack.traker.Course
 import kotlinx.android.synthetic.main.fragment_routeslist.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers.Main
-import kotlinx.coroutines.launch
 import java.io.File
 
 /**
  * A placeholder fragment containing a simple view.
  */
-class RoutesListFragment : Fragment() {
+class RoutesListFragment : Fragment(){
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -48,16 +43,30 @@ class RoutesListFragment : Fragment() {
             if(gpxFiles[i].name.endsWith(".gpx",true))
                 routeNames.add(gpxFiles[i].name)
 
-        val adapter = ArrayAdapter(activity!!.applicationContext, android.R.layout.simple_list_item_1, routeNames)
+        id_gpx_list.layoutManager = LinearLayoutManager(context)
+        val adapter = RoutesListAdapter(context, routeNames, View.OnClickListener {
+            val position = id_gpx_list.getChildLayoutPosition(it)
+            val intent = Intent(context, CourseViewerActivity::class.java).apply {
+                putExtra("filename", routeNames[position])
+            }
+            startActivity(intent)
+        })
+
         id_gpx_list.adapter = adapter
 
-        id_gpx_list.setOnItemClickListener { adapterView, v, i, l ->
+        /*
+        id_gpx_list.setOnClickListener {
+            Toast.makeText(context, "Cliccato", Toast.LENGTH_SHORT).show()
+
+
+        }
+
+        id_gpx_list.setOnClickListener { adapterView, v, i, l ->
             val intent = Intent(context, CourseViewerActivity::class.java).apply {
                 putExtra("filename", routeNames[i])
             }
             startActivity(intent)
-
-        }
+        }*/
     }
 
     companion object {

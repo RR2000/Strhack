@@ -1,4 +1,4 @@
-package com.example.strhack
+package com.rondinella.strhack.traker
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -9,11 +9,10 @@ import android.graphics.Paint
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
-import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import com.example.strhack.convertLongToTime
 import com.google.android.gms.location.*
 import com.rondinella.strhack.R
-import com.rondinella.strhack.traker.GpxFileWriter
 
 class TrackerService : Service() {
 

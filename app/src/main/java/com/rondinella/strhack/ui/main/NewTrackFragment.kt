@@ -1,51 +1,27 @@
 package com.rondinella.strhack.ui.main
 
-import android.annotation.SuppressLint
-import android.app.ActivityManager
 import android.content.Intent
-import android.content.pm.ServiceInfo
-import android.location.Geocoder
-import android.os.Build
 import android.os.Bundle
-import android.os.Looper
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ListView
-import android.widget.Toast
-import androidx.core.view.get
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceManager
-import androidx.viewpager2.widget.ViewPager2
-import com.example.strhack.AdvancedGeoPoint
-import com.example.strhack.TrackerService
-import com.example.strhack.readAdvencedGeoPoints
+import com.rondinella.strhack.traker.TrackerService
 import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.rondinella.strhack.R
-import com.rondinella.strhack.activities.MainActivity
 import com.rondinella.strhack.traker.GpxFileWriter
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.activity_main.view.*
 import kotlinx.android.synthetic.main.fragment_newtrack.*
 import org.osmdroid.api.IMapController
 import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
-import java.util.*
-import java.util.jar.Manifest
-import kotlin.collections.ArrayList
-import kotlin.reflect.typeOf
 
 /**
  * A placeholder fragment containing a simple view.
@@ -142,6 +118,8 @@ class NewTrackFragment : Fragment() {
                     }
                 }
         }
+
+        id_centra.performClick()
 
     }
 
