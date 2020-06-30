@@ -1,31 +1,74 @@
 package com.rondinella.strhack.activities
 
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Paint
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
+import android.os.Parcelable
 import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
-import androidx.recyclerview.widget.RecyclerView
 import com.rondinella.strhack.R
 import com.rondinella.strhack.traker.Course
 import kotlinx.android.synthetic.main.activity_course_viewer.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.osmdroid.config.Configuration
-import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
+import java.io.*
 import kotlin.math.abs
 
 @Suppress("DEPRECATION")
 class CourseViewerActivity : AppCompatActivity() {
 
+    fun getFileFromPath(file: File): ByteArray {
+        val size = file.length().toInt()
+        val bytes = ByteArray(size)
+        try {
+            val buf = BufferedInputStream(FileInputStream(file))
+            buf.read(bytes, 0, bytes.size)
+            buf.close()
+        } catch (e: FileNotFoundException) {
+            // TODO Auto-generated catch block
+            e.printStackTrace()
+        } catch (e: IOException) {
+            // TODO Auto-generated catch block
+            e.printStackTrace()
+        }
+        return bytes
+    }
 
+
+    @Throws(IOException::class)
+    fun handleReceiveGpx(intent: Intent): String {
+        val gpxUri: Uri = intent.data!!
+        val file = File(cacheDir, "gpx")
+        val inputStream: InputStream? = contentResolver.openInputStream(gpxUri)
+        try {
+            FileOutputStream(file).use { output ->
+                val buffer = ByteArray(4 * 1024) // or other buffer size
+                var read: Int
+                while (inputStream?.read(buffer).also { read = it!! } != -1) {
+                    output.write(buffer, 0, read)
+                }
+                output.flush()
+            }
+        } finally {
+            inputStream?.close()
+            val bytes: ByteArray = getFileFromPath(file)
+
+            return String(bytes)
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
@@ -43,21 +86,24 @@ class CourseViewerActivity : AppCompatActivity() {
 
         //course_information.adapter = RecyclerView.Adapter<>
 
-        val pathFile = getExternalFilesDir(null).toString() + "/tracks/" + intent.getStringExtra("filename")
-
         lateinit var course: Course
+
+        if(intent.action == Intent.ACTION_VIEW){
+            course = Course(handleReceiveGpx(intent))
+        }
+
         CoroutineScope(Main).launch {
-            course = Course(pathFile)
+            if(intent.action != Intent.ACTION_VIEW){
+                course = Course(File(getExternalFilesDir(null).toString() + "/tracks/" + intent.getStringExtra("filename")))
+            }
         }.invokeOnCompletion {
             CoroutineScope(Main).launch {
                 drawBlankMap(course, id_map_gpxViewer, loading_course_circle)
 
-                val latitudeMid = (course.farNorthPoint().latitude + course.farSouthPoint().latitude) / 2
-                val longitudeMid = (course.farEastPoint().longitude + course.farWestPoint().longitude) / 2
+                id_map_gpxViewer.controller.animateTo(course.centralPoint())
+                id_map_gpxViewer.zoomToBoundingBox(course.boundingBox(), true)
 
-                id_map_gpxViewer.controller.animateTo(GeoPoint(latitudeMid, longitudeMid))
-
-                id_map_gpxViewer.controller.setZoom(15.0)
+                //id_map_gpxViewer.controller.setZoom(15.0)
             }
         }
 

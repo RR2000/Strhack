@@ -1,39 +1,44 @@
 package com.rondinella.strhack.traker
 
 import android.util.Log
-import android.widget.ProgressBar
 import com.example.strhack.AdvancedGeoPoint
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.w3c.dom.Document
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
+import org.xml.sax.InputSource
 import java.io.File
+import java.io.StringReader
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.collections.ArrayList
 
-class Course(pathFile: String) {
+class Course() {
     private var geoPoints = ArrayList<AdvancedGeoPoint>()
-    private var gpxFile: File = File(pathFile)
+    private lateinit var gpxFile: File
     private var courseName: String = ""
 
-    private var farNorthPoint = GeoPoint(-90.0, 0.0)
-    private var farSouthPoint = GeoPoint(90.0, 0.0)
-    private var farWestPoint = GeoPoint(0.0, 180.0)
-    private var farEastPoint = GeoPoint(0.0, -180.0)
+    private var farNorthPoint = -90.0
+    private var farSouthPoint = 90.0
+    private var farWestPoint = 180.0
+    private var farEastPoint = -180.0
     private var highestPoint = GeoPoint(0.0, 0.0, -5000.0)
     private var lowestPoint = GeoPoint(0.0, 0.0, 5000.0)
     private lateinit var centralPoint: GeoPoint
 
-    init {
-        readPoints()
+    constructor(text: String) : this() {
+        readPoints(text)
+    }
+
+    constructor(gpxFile: File) : this() {
+        this.gpxFile = gpxFile
+        readPoints(gpxFile)
     }
 
     fun geoPoints(): ArrayList<AdvancedGeoPoint> {
@@ -48,23 +53,7 @@ class Course(pathFile: String) {
         return lowestPoint.altitude
     }
 
-    fun farNorthPoint(): GeoPoint {
-        return farNorthPoint
-    }
-
-    fun farSouthPoint(): GeoPoint {
-        return farSouthPoint
-    }
-
-    fun farWestPoint(): GeoPoint {
-        return farWestPoint
-    }
-
-    fun farEastPoint(): GeoPoint {
-        return farEastPoint
-    }
-
-    fun centerPoint(): GeoPoint {
+    fun centralPoint(): GeoPoint {
         return centralPoint
     }
 
@@ -72,11 +61,23 @@ class Course(pathFile: String) {
         return courseName
     }
 
-    private fun readPoints() {
-        CoroutineScope(Main).launch {
-            val xmlDoc: Document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(gpxFile)
-            xmlDoc.documentElement.normalize()
+    fun boundingBox(): BoundingBox{
+        val padding = 0.0007
+        return BoundingBox(farNorthPoint + padding, farEastPoint + padding, farSouthPoint - padding, farWestPoint - padding)
+    }
 
+    private fun readPoints(string: String){
+        readPoints(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(InputSource(StringReader(string))))
+    }
+
+    private fun readPoints(file: File){
+        readPoints(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file))
+    }
+
+    private fun readPoints(xmlDoc: Document) {
+        xmlDoc.documentElement.normalize()
+
+        CoroutineScope(Main).launch {
             val trackPointList: NodeList = xmlDoc.getElementsByTagName("trkpt")
 
             courseName = if (xmlDoc.getElementsByTagName("name").length > 0)
@@ -111,30 +112,22 @@ class Course(pathFile: String) {
 
                 val lastGeoPoint = geoPoints.last()
 
-                if (lastGeoPoint.latitude > farNorthPoint.latitude)
-                    farNorthPoint = lastGeoPoint
-                if (lastGeoPoint.latitude < farSouthPoint.latitude)
-                    farSouthPoint = lastGeoPoint
-                if (lastGeoPoint.longitude > farEastPoint.longitude)
-                    farEastPoint = lastGeoPoint
-                if (lastGeoPoint.longitude < farWestPoint.longitude)
-                    farWestPoint = lastGeoPoint
+                farNorthPoint = if(lastGeoPoint.latitude > farNorthPoint) lastGeoPoint.latitude else farNorthPoint
+                farSouthPoint = if(lastGeoPoint.latitude < farSouthPoint) lastGeoPoint.latitude else farSouthPoint
+                farEastPoint = if(lastGeoPoint.longitude > farEastPoint) lastGeoPoint.longitude else farEastPoint
+                farWestPoint = if(lastGeoPoint.longitude < farWestPoint) lastGeoPoint.longitude else farWestPoint
+
                 if (lastGeoPoint.altitude < lowestPoint.altitude)
                     lowestPoint = lastGeoPoint
                 if (lastGeoPoint.altitude > highestPoint.altitude)
                     highestPoint = lastGeoPoint
             }
+        }.invokeOnCompletion {
+            val latitudeMid = (farNorthPoint + farSouthPoint) / 2.0
+            val longitudeMid = (farEastPoint + farWestPoint) / 2.0
+            centralPoint = GeoPoint(latitudeMid, longitudeMid)
         }
 
-
-        Log.w("NORD", farNorthPoint.toDoubleString())
-        Log.w("EST", farEastPoint.toDoubleString())
-        Log.w("SUD", farSouthPoint.toDoubleString())
-        Log.w("OVEST", farWestPoint.toDoubleString())
-
-        centralPoint = GeoPoint((farNorthPoint.latitude + farSouthPoint.latitude) / 2.0, (farEastPoint.longitude + farWestPoint.longitude) / 2.0)
-
-        Log.w("CENTRAL", centralPoint.toDoubleString())
     }
 
 }
