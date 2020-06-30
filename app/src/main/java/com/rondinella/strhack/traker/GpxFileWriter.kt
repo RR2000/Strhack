@@ -5,14 +5,14 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.strhack.convertLongToTime
+import com.rondinella.strhack.utils.convertLongToTime
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.overlay.Polyline
 import java.io.File
 import java.lang.Exception
 import java.util.*
 
-class GpxFileWriter(context: Context) {
+class GpxFileWriter(context: Context, /*var*/ title: String = "") {
     private val tracksLocation = File(context.getExternalFilesDir(null).toString() + "/tracks")
     private var closed = false
     private lateinit var trackFile: File
@@ -22,7 +22,9 @@ class GpxFileWriter(context: Context) {
 
     init {
         try {
-            filename = convertLongToTime(Date().time).replace(":", ".") + ".gpx"
+
+            filename = "date."+ convertLongToTime(Date().time).replace(":", ".") + ".title." + title + ".strhack.gpx"
+
             Log.w("FILENAME", filename)
 
             while (!tracksLocation.exists()) { //SECONDO ME CI VA UN IF
@@ -39,7 +41,7 @@ class GpxFileWriter(context: Context) {
                 <time>${convertLongToTime(Date().time)}</time>
             </metadata>
             <trk>
-                <name>StrHack Track</name>
+                <name>${title}</name>
             
             """.trimIndent()
             )

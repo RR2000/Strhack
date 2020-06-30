@@ -11,4 +11,6 @@
     <string name="altitude_map">Altitudine</string>
     <string name="altitude_difference_map">Dislivello</string>
     <string name="slope_map">Pendenza</string>
+    <string name="course_of">Giro del</string>
+    <string name="at_time">alle</string>
 </resources>

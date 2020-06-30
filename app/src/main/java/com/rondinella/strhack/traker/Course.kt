@@ -1,6 +1,7 @@
 package com.rondinella.strhack.traker
 
 import android.util.Log
+import android.widget.Toast
 import com.example.strhack.AdvancedGeoPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.Main
@@ -11,6 +12,7 @@ import org.w3c.dom.Document
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
 import org.xml.sax.InputSource
+import org.xml.sax.SAXParseException
 import java.io.File
 import java.io.StringReader
 import java.sql.Time
@@ -73,7 +75,11 @@ class Course() {
     }
 
     private fun readPoints(file: File){
-        readPoints(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file))
+        try {
+            readPoints(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file))
+        }catch (e: SAXParseException){
+            Log.w("MALE", "Qualcosa è storto")
+        }
     }
 
     private fun readPoints(xmlDoc: Document) {

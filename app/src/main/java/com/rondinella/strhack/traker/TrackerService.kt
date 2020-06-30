@@ -10,7 +10,7 @@ import android.os.Build
 import android.os.IBinder
 import android.os.Looper
 import androidx.core.app.NotificationCompat
-import com.example.strhack.convertLongToTime
+import com.rondinella.strhack.utils.convertLongToTime
 import com.google.android.gms.location.*
 import com.rondinella.strhack.R
 
@@ -101,11 +101,11 @@ class TrackerService : Service() {
 
     private fun createNotification(
         context: Context,
-        channelid: String,
+        channelId: String,
         type: Int
     ): NotificationCompat.Builder? {
         try {
-            return NotificationCompat.Builder(context, channelid)
+            return NotificationCompat.Builder(context, channelId)
                 .setContentTitle("")
                 .setContentText("")
                 .setOnlyAlertOnce(true)
@@ -114,6 +114,7 @@ class TrackerService : Service() {
                 .setCategory(NotificationCompat.CATEGORY_SERVICE)
                 .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
                 .setSmallIcon(R.mipmap.ic_launcher)
+                .setBadgeIconType(type)
         } catch (e: Exception) {
             e.printStackTrace()
         }
