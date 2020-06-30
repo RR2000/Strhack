@@ -13,7 +13,9 @@ import org.w3c.dom.NodeList
 import org.xml.sax.InputSource
 import java.io.File
 import java.io.StringReader
+import java.sql.Time
 import java.text.DateFormat
+import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.xml.parsers.DocumentBuilderFactory
@@ -80,25 +82,25 @@ class Course() {
         CoroutineScope(Main).launch {
             val trackPointList: NodeList = xmlDoc.getElementsByTagName("trkpt")
 
-            courseName = if (xmlDoc.getElementsByTagName("name").length > 0)
-                xmlDoc.getElementsByTagName("name").item(0).textContent.toString()
-            else
-                xmlDoc.getElementsByTagName("time").item(0).textContent.toString()
-
-
             for (i in 0 until trackPointList.length) {
                 val point: Node = trackPointList.item(i)
 
                 var altitude = 0.0
                 var date = Date()
-                val formatter: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ITALIAN)
+                var formatter: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ITALIAN)
 
                 for (j in 1 until point.childNodes.length) {
                     if (point.childNodes.item(j).nodeName == "ele") {
                         altitude = point.childNodes.item(j).textContent.toDouble()
                     }
                     if (point.childNodes.item(j).nodeName == "time")
-                        date = formatter.parse(point.childNodes.item(j).textContent)!!
+                        try {
+                            date = formatter.parse(point.childNodes.item(j).textContent)!!
+                        }catch (e: ParseException){
+                            formatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ITALIAN)
+                            date = formatter.parse(point.childNodes.item(j).textContent)!!
+                        }
+
                 }
 
                 geoPoints.add(
@@ -126,6 +128,11 @@ class Course() {
             val latitudeMid = (farNorthPoint + farSouthPoint) / 2.0
             val longitudeMid = (farEastPoint + farWestPoint) / 2.0
             centralPoint = GeoPoint(latitudeMid, longitudeMid)
+
+            courseName = if (xmlDoc.getElementsByTagName("name").length > 0)
+                xmlDoc.getElementsByTagName("name").item(0).textContent.toString()
+            else
+                DateFormat.getDateInstance(DateFormat.FULL).format(geoPoints.first().date)
         }
 
     }

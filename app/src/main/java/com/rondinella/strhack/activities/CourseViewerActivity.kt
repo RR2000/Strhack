@@ -5,9 +5,6 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
-import android.os.Parcelable
-import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
@@ -84,8 +81,6 @@ class CourseViewerActivity : AppCompatActivity() {
         val overlayRotation = RotationGestureOverlay(this, id_map_gpxViewer).apply { isEnabled = true }
         id_map_gpxViewer.overlays.add(overlayRotation)
 
-        //course_information.adapter = RecyclerView.Adapter<>
-
         lateinit var course: Course
 
         if(intent.action == Intent.ACTION_VIEW){
@@ -98,6 +93,8 @@ class CourseViewerActivity : AppCompatActivity() {
             }
         }.invokeOnCompletion {
             CoroutineScope(Main).launch {
+                title = course.courseName()
+
                 drawBlankMap(course, id_map_gpxViewer, loading_course_circle)
 
                 id_map_gpxViewer.controller.animateTo(course.centralPoint())
@@ -121,13 +118,13 @@ class CourseViewerActivity : AppCompatActivity() {
 
         button_altitude_difference.setOnClickListener {
             CoroutineScope(Main).launch {
-                drawAltitudeDiffereceMap(course, id_map_gpxViewer, loading_course_circle)
+                drawAltitudeDifferenceMap(course, id_map_gpxViewer, loading_course_circle)
             }
         }
 
     }
 
-    suspend fun drawBlankMap(course: Course, map: MapView, loadingCourseCircle: ProgressBar) {
+    private suspend fun drawBlankMap(course: Course, map: MapView, loadingCourseCircle: ProgressBar) {
         map.overlayManager.removeAll(map.overlays)
 
         map.visibility = View.INVISIBLE
@@ -151,7 +148,7 @@ class CourseViewerActivity : AppCompatActivity() {
     }
 
 
-    suspend fun drawAltitudeDiffereceMap(course: Course, map: MapView, loadingCourseCircle: ProgressBar) {
+    private suspend fun drawAltitudeDifferenceMap(course: Course, map: MapView, loadingCourseCircle: ProgressBar) {
         map.overlayManager.clear()
 
         val maxAltitude = course.maxAltitude()
@@ -183,7 +180,7 @@ class CourseViewerActivity : AppCompatActivity() {
         loadingCourseCircle.visibility = View.INVISIBLE
     }
 
-    suspend fun drawSlopeMap(course: Course, map: MapView, loadingCourseCircle: ProgressBar) {
+    private suspend fun drawSlopeMap(course: Course, map: MapView, loadingCourseCircle: ProgressBar) {
         map.overlayManager.clear()
 
         map.visibility = View.INVISIBLE
