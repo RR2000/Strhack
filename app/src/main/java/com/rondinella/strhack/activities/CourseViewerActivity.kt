@@ -5,13 +5,18 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
+import android.view.MotionEvent
 import android.view.View
+import android.view.View.OnTouchListener
 import android.widget.ProgressBar
+import android.widget.ScrollView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
 import com.rondinella.strhack.R
 import com.rondinella.strhack.traker.Course
 import kotlinx.android.synthetic.main.activity_course_viewer.*
+import kotlinx.android.synthetic.main.fragment_routeslist.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.Dispatchers.Main
@@ -23,6 +28,7 @@ import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import java.io.*
 import kotlin.math.abs
+
 
 @Suppress("DEPRECATION")
 class CourseViewerActivity : AppCompatActivity() {
@@ -66,6 +72,7 @@ class CourseViewerActivity : AppCompatActivity() {
             return String(bytes)
         }
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
@@ -83,24 +90,24 @@ class CourseViewerActivity : AppCompatActivity() {
 
         lateinit var course: Course
 
-        if(intent.action == Intent.ACTION_VIEW){
+        if (intent.action == Intent.ACTION_VIEW) {
             course = Course(handleReceiveGpx(intent))
         }
 
         CoroutineScope(Main).launch {
-            if(intent.action != Intent.ACTION_VIEW){
+            if (intent.action != Intent.ACTION_VIEW) {
                 course = Course(File(getExternalFilesDir(null).toString() + "/tracks/" + intent.getStringExtra("filename")))
             }
         }.invokeOnCompletion {
             CoroutineScope(Main).launch {
-                title = course.courseName()
-
+                toolbar_course_viewer.setTitleTextColor(Color.WHITE)
                 drawBlankMap(course, id_map_gpxViewer, loading_course_circle)
+
+            }.invokeOnCompletion {
 
                 id_map_gpxViewer.controller.animateTo(course.centralPoint())
                 id_map_gpxViewer.zoomToBoundingBox(course.boundingBox(), true)
-
-                //id_map_gpxViewer.controller.setZoom(15.0)
+                toolbar_course_viewer.title = course.courseName()
             }
         }
 
@@ -120,6 +127,14 @@ class CourseViewerActivity : AppCompatActivity() {
             CoroutineScope(Main).launch {
                 drawAltitudeDifferenceMap(course, id_map_gpxViewer, loading_course_circle)
             }
+        }
+
+        id_map_gpxViewer.setOnTouchListener { view, motionEvent ->
+            when(motionEvent.action){
+                MotionEvent.ACTION_DOWN -> scrollview_course_viewer.requestDisallowInterceptTouchEvent(true)
+                MotionEvent.ACTION_UP -> scrollview_course_viewer.requestDisallowInterceptTouchEvent(false)
+            }
+            view.onTouchEvent(motionEvent)
         }
 
     }
@@ -187,17 +202,17 @@ class CourseViewerActivity : AppCompatActivity() {
         loadingCourseCircle.visibility = View.VISIBLE
 
         withContext(Default) {
-            for (i in 0 until course.geoPoints().size-1 ) {
+            for (i in 0 until course.geoPoints().size - 1) {
                 val seg = Polyline()
 
                 seg.addPoint(course.geoPoints()[i])
-                seg.addPoint(course.geoPoints()[i+1])
+                seg.addPoint(course.geoPoints()[i + 1])
 
                 val distance = seg.actualPoints.last().distanceToAsDouble(seg.actualPoints.first())
                 val altitude = seg.actualPoints.last().altitude - seg.actualPoints.first().altitude
                 val slope = altitude / distance * 100
 
-                var colorModifier = if(slope>0)
+                var colorModifier = if (slope > 0)
                     ((slope / 25.0) * 255.0).toInt()
                 else
                     ((slope / 40.0) * 255.0).toInt()
@@ -225,5 +240,9 @@ class CourseViewerActivity : AppCompatActivity() {
         map.visibility = View.VISIBLE
         loadingCourseCircle.visibility = View.INVISIBLE
     }
+}
+
+fun ScrollView.onTouchEvent() {
+
 }
 

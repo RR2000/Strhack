@@ -13,4 +13,5 @@
     <string name="slope_map">Pendenza</string>
     <string name="course_of">Giro del</string>
     <string name="at_time">alle</string>
+    <string name="strhack_is_recording">Strhack sta registrando…</string>
 </resources>

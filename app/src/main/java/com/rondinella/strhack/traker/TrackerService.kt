@@ -22,7 +22,7 @@ class TrackerService : Service() {
 
     private val NOTIFICATION_ID = 9083150
     val CHANNEL_ID = "CHANNEL_ID"
-    val CHANNEL_ID_NAME = "CHANNEL_ID_NAME"
+    val CHANNEL_ID_NAME = "Channel name"
 
 
     lateinit var track: GpxFileWriter
@@ -107,8 +107,7 @@ class TrackerService : Service() {
     ): NotificationCompat.Builder? {
         try {
             return NotificationCompat.Builder(context, channelId)
-                .setContentTitle("")
-                .setContentText("")
+                .setContentTitle(context.getString(R.string.strhack_is_recording))
                 .setOnlyAlertOnce(true)
                 .setOngoing(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
