@@ -27,10 +27,13 @@ class TrackerService : Service() {
 
     lateinit var track: GpxFileWriter
 
+    private lateinit var locationCallback: LocationCallback
+
     override fun onCreate() {
 
         try {
             track = GpxFileWriter(applicationContext)
+
             notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val channel = NotificationChannel(
@@ -58,18 +61,16 @@ class TrackerService : Service() {
         }
 
         track.line.outlinePaint.strokeCap = Paint.Cap.ROUND
-        val locationCallback = object : LocationCallback() {
+        locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult?) {
                 val builder: NotificationCompat.Builder? = createNotification(applicationContext, CHANNEL_ID, 0)
 
                 locationResult ?: return
                 for (location in locationResult.locations) {
                     builder?.setContentText("${convertLongToTime(location.time)}\nLONG: ${location.longitude}\nLAT: ${location.latitude}")!!
-                        .setSmallIcon(R.mipmap.ic_launcher_round)
                     notificationManager.notify(NOTIFICATION_ID, builder.build())
 
-                    track.addPoint(location.longitude.toString(), location.latitude.toString(), location.time.toString(), location.altitude.toString(), null,null)
-
+                    track.addPoint(location.longitude.toString(), location.latitude.toString(), location.time.toString(), location.altitude.toString(), null, null)
                 }
             }
         }
@@ -94,9 +95,9 @@ class TrackerService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             notificationManager.deleteNotificationChannel(CHANNEL_ID)
         }
+        fusedLocationClient.removeLocationUpdates(locationCallback)
 
     }
-
 
 
     private fun createNotification(
