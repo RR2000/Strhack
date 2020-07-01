@@ -24,6 +24,7 @@ class GpxFileWriter(context: Context, /*var*/ title: String = "") {
         try {
 
             filename = "date."+ convertLongToTime(Date().time).replace(":", ".") + ".title." + title + ".strhack.gpx"
+            WrittenFilenameData.setFilename(filename)
 
             Log.w("FILENAME", filename)
 
@@ -87,6 +88,7 @@ class GpxFileWriter(context: Context, /*var*/ title: String = "") {
         closed = true
         //map_view.overlayManager.remove(line)
         trackFile.appendText("</trk>\n</gpx>")
+        WrittenFilenameData.setFilename(null)
     }
 
     object WrittenPolylineData: ViewModel() {
@@ -99,6 +101,18 @@ class GpxFileWriter(context: Context, /*var*/ title: String = "") {
 
         fun refreshPolyline(polyline: Polyline){
             this.polyline.value = polyline
+        }
+    }
+
+    object WrittenFilenameData: ViewModel(){
+        private val filename = MutableLiveData<String?>()
+
+        fun getFilename(): LiveData<String?>{
+            return filename
+        }
+
+        fun setFilename(filename: String?){
+            this.filename.value = filename
         }
     }
 }

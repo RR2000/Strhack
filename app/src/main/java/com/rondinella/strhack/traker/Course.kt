@@ -78,7 +78,12 @@ class Course() {
         try {
             readPoints(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file))
         }catch (e: SAXParseException){
-            Log.w("MALE", "Qualcosa è storto")
+            try{
+                file.appendText("</trk>\n</gpx>")
+                readPoints(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file))
+            }catch (e: SAXParseException){
+                e.stackTrace
+            }
         }
     }
 

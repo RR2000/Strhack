@@ -14,4 +14,5 @@
     <string name="course_of">Giro del</string>
     <string name="at_time">alle</string>
     <string name="strhack_is_recording">Strhack sta registrando…</string>
+    <string name="permits_error">Non riesco ad impostare i permessi! Impostali manualmente!</string>
 </resources>

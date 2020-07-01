@@ -1,5 +1,16 @@
 package com.rondinella.strhack.utils
 
+import android.Manifest
+import android.app.Activity
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import android.util.Log
+import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat.startActivity
 import com.example.strhack.AdvancedGeoPoint
 import com.rondinella.strhack.R
 import org.osmdroid.util.GeoPoint
@@ -14,17 +25,72 @@ import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.collections.ArrayList
 
 
+private fun permissionList(): ArrayList<String> {
+    val permissionsArray = arrayListOf<String>()
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+        permissionsArray.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+
+    permissionsArray.add(Manifest.permission.ACCESS_FINE_LOCATION)
+    permissionsArray.add(Manifest.permission.INTERNET)
+    permissionsArray.add(Manifest.permission.ACCESS_NETWORK_STATE)
+    permissionsArray.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    permissionsArray.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+        permissionsArray.add(Manifest.permission.FOREGROUND_SERVICE)
+
+    return permissionsArray
+}
+
+fun hasPermissions(activity: Activity): Boolean {
+    val permissionsArray = permissionList()
+
+    for (i in 0 until permissionsArray.size) {
+        if (ActivityCompat.checkSelfPermission(activity, permissionsArray[i]) != PackageManager.PERMISSION_GRANTED) {
+            return false
+        }
+
+    }
+
+    return true
+}
+
+fun askPermissions(activity: Activity) {
+    val permissionsArray = permissionList()
+
+    var i = 0
+    while (i < permissionsArray.size) {
+        if (ActivityCompat.checkSelfPermission(activity, permissionsArray[i]) == PackageManager.PERMISSION_GRANTED)
+            permissionsArray.remove(permissionsArray[i])
+        i++
+    }
+
+    if (permissionsArray.size > 0)
+        ActivityCompat.requestPermissions(activity, permissionsArray.toTypedArray(), 36)
+
+    if (!hasPermissions(activity)) {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+        val uri: Uri = Uri.fromParts("package", activity.packageName, null)
+        intent.data = uri
+        activity.startActivity(Intent(intent))
+        Toast.makeText(activity.applicationContext, activity.getString(R.string.permits_error), Toast.LENGTH_LONG).show()
+    }
+}
+
+
 fun convertLongToTime(time: Long): String {
     val date = Date(time)
     val formatter: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ITALIAN)
     return formatter.format(date)
 }
 
-fun convertStringFilenameToStringName(date: String, course_of: String, at_time: String): String{
+fun convertStringFilenameToStringName(date: String, course_of: String, at_time: String): String {
     val parser = SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss'Z'", Locale.ITALIAN)
-    val formatter = SimpleDateFormat("'${course_of} 'dd MMMM yy '${at_time}' HH:mm", Locale.ITALIAN)
+    val formatter = SimpleDateFormat("'${course_of} 'dd MMMM yyyy '${at_time}' HH:mm", Locale.ITALIAN)
     return formatter.format(parser.parse(date)!!)
 }
+
 //It converts a GPX file into a list of GeoPoints
 fun readGeoPoints(file: File): List<GeoPoint> {
     val xmlDoc: Document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file)
@@ -38,7 +104,7 @@ fun readGeoPoints(file: File): List<GeoPoint> {
 
         var altitude = 1500.0
 
-        if(point.childNodes.item(1).nodeName == "ele")
+        if (point.childNodes.item(1).nodeName == "ele")
             altitude = point.childNodes.item(1).textContent.toDouble()
 
         mMap.add(
@@ -64,13 +130,13 @@ fun readAdvencedGeoPoints(file: File): ArrayList<AdvancedGeoPoint> {
         val point: Node = trackPointList.item(i)
 
         var altitude = 1500.0
-        var date  = Date()
+        var date = Date()
         val formatter: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ITALIAN)
 
-        for (j in 1 until point.childNodes.length){
-            if(point.childNodes.item(j).nodeName == "ele")
+        for (j in 1 until point.childNodes.length) {
+            if (point.childNodes.item(j).nodeName == "ele")
                 altitude = point.childNodes.item(j).textContent.toDouble()
-            if(point.childNodes.item(j).nodeName == "time")
+            if (point.childNodes.item(j).nodeName == "time")
                 date = formatter.parse(point.childNodes.item(j).textContent)!!
         }
 

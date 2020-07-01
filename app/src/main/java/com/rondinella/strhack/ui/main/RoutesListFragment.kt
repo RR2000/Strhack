@@ -1,7 +1,9 @@
 package com.rondinella.strhack.ui.main
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,7 +11,10 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.rondinella.strhack.R
 import com.rondinella.strhack.activities.CourseViewerActivity
+import com.rondinella.strhack.traker.GpxFileWriter
+import com.rondinella.strhack.utils.askPermissions
 import com.rondinella.strhack.utils.convertStringFilenameToStringName
+import com.rondinella.strhack.utils.hasPermissions
 import kotlinx.android.synthetic.main.fragment_routeslist.*
 import java.io.File
 
@@ -18,12 +23,14 @@ import java.io.File
  */
 class RoutesListFragment : Fragment() {
 
+    lateinit var parentActivity: Activity
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val root = inflater.inflate(R.layout.fragment_routeslist, container, false)
-
+        parentActivity = activity!!
         return root
     }
 
@@ -58,31 +65,44 @@ class RoutesListFragment : Fragment() {
 
         gpxFiles.sort()
 
+
+        //
+
+
         val routesFilenameName = Pair<ArrayList<String>, ArrayList<String>>(ArrayList(), ArrayList())
 
-        for (i in gpxFiles.indices) {
-            if (gpxFiles[i].name.endsWith(".gpx", true)) {
-                routesFilenameName.first.add(gpxFiles[i].name) //add filename
-                if (gpxFiles[i].name.endsWith(".strhack.gpx", true)) {
-                    val filename = gpxFiles[i].name.replace(".strhack.gpx", "")
-                    val title = filename.substringAfter(".title.")
-                    if (title == "") {
-                        routesFilenameName.second.add(
-                            convertStringFilenameToStringName(
-                                filename.substringAfter("date.").substringBefore(".title."),
-                                getString(R.string.course_of),
-                                getString(R.string.at_time)
+        if (hasPermissions(parentActivity)) {
+            for (i in gpxFiles.indices) {
+                if (GpxFileWriter.WrittenFilenameData.getFilename().value != null)
+                    if (gpxFiles[i].name == GpxFileWriter.WrittenFilenameData.getFilename().value)
+                        continue
+
+                if (gpxFiles[i].name.endsWith(".gpx", true)) {
+                    routesFilenameName.first.add(gpxFiles[i].name) //add filename
+                    if (gpxFiles[i].name.endsWith(".strhack.gpx", true)) {
+                        val filename = gpxFiles[i].name.replace(".strhack.gpx", "")
+                        val title = filename.substringAfter(".title.")
+                        if (title == "") {
+                            routesFilenameName.second.add(
+                                convertStringFilenameToStringName(
+                                    filename.substringAfter("date.").substringBefore(".title."),
+                                    getString(R.string.course_of),
+                                    getString(R.string.at_time)
+                                )
                             )
-                        )
-                    } else
-                        routesFilenameName.second.add(title)
-                } else {
-                    routesFilenameName.second.add(gpxFiles[i].name)//add visualized name
+                        } else
+                            routesFilenameName.second.add(title)
+                    } else {
+                        routesFilenameName.second.add(gpxFiles[i].name)//add visualized name
+                    }
                 }
             }
+        }else{
+            askPermissions(parentActivity)
         }
 
         return routesFilenameName
+
     }
 
     companion object {

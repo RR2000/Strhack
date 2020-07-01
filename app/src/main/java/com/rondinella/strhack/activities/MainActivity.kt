@@ -1,52 +1,26 @@
 package com.rondinella.strhack.activities
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import com.google.android.material.tabs.TabLayout
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayoutMediator
 import com.rondinella.strhack.R
 import com.rondinella.strhack.ui.main.SectionsPagerAdapter
+import com.rondinella.strhack.utils.askPermissions
+import com.rondinella.strhack.utils.hasPermissions
 
 
 class MainActivity : AppCompatActivity() {
-
-    private fun managePermissions() {
-        val permissionsArray = arrayListOf<String>()
-
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
-            permissionsArray.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-        permissionsArray.add(Manifest.permission.ACCESS_FINE_LOCATION)
-        permissionsArray.add(Manifest.permission.INTERNET)
-        permissionsArray.add(Manifest.permission.ACCESS_NETWORK_STATE)
-        permissionsArray.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-        permissionsArray.add(Manifest.permission.READ_EXTERNAL_STORAGE)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
-            permissionsArray.add(Manifest.permission.FOREGROUND_SERVICE)
-
-        var i = 0
-        while(i < permissionsArray.size) {
-            if (ActivityCompat.checkSelfPermission(this, permissionsArray[i]) == PackageManager.PERMISSION_GRANTED)
-                permissionsArray.removeAt(i)
-
-            i++
-        }
-
-        if(permissionsArray.size > 0)
-            ActivityCompat.requestPermissions(this, permissionsArray.toTypedArray(), 36)
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         //If the user didn't gave all permissions it asks for them again
-        managePermissions()
+        (!hasPermissions(this))
+            askPermissions(this)
 
         val viewPager: ViewPager2 = findViewById(R.id.view_pager)
         //create a new SectionPageAdapter for using it with viewPager

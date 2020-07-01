@@ -1,11 +1,13 @@
 package com.rondinella.strhack.ui.main
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.RecyclerView
@@ -13,7 +15,10 @@ import com.rondinella.strhack.traker.TrackerService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.rondinella.strhack.R
+import com.rondinella.strhack.activities.MainActivity
 import com.rondinella.strhack.traker.GpxFileWriter
+import com.rondinella.strhack.utils.askPermissions
+import com.rondinella.strhack.utils.hasPermissions
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_main.view.*
 import kotlinx.android.synthetic.main.fragment_newtrack.*
@@ -34,6 +39,7 @@ class NewTrackFragment : Fragment() {
 
     lateinit var fusedLocationClient: FusedLocationProviderClient
     var courseLine = Polyline()
+    lateinit var parentActivity: Activity
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,7 +47,9 @@ class NewTrackFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val root = inflater.inflate(R.layout.fragment_newtrack, container, false)
+        parentActivity = activity!!
         return root
+
     }
 
 
@@ -82,23 +90,20 @@ class NewTrackFragment : Fragment() {
             false
         }
 
+
+
         id_start.setOnClickListener {
+            if(hasPermissions(parentActivity)) {
+                activity!!.startService(Intent(context, TrackerService().javaClass))
 
-            activity!!.startService(Intent(context, TrackerService().javaClass))
-
-            GpxFileWriter.WrittenPolylineData.getPolyline().observe(this, androidx.lifecycle.Observer { polyline ->
-                id_map.overlayManager.remove(courseLine)
-                courseLine = polyline
-                id_map.overlayManager.add(courseLine)
-            })
-
-            /*
-            currentTrackPositionData.currentPosition.observe(this, androidx.lifecycle.Observer { point: GeoPoint ->
-                id_map.overlayManager.remove(courseLine)
-                courseLine.addPoint(point)
-                id_map.overlayManager.add(courseLine)
-            })*/
-
+                GpxFileWriter.WrittenPolylineData.getPolyline().observe(this, androidx.lifecycle.Observer { polyline ->
+                    id_map.overlayManager.remove(courseLine)
+                    courseLine = polyline
+                    id_map.overlayManager.add(courseLine)
+                })
+            }else{
+                askPermissions(parentActivity)
+            }
         }
 
         id_stop.setOnClickListener {
