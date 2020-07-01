@@ -23,6 +23,7 @@ import java.util.*
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.collections.ArrayList
 
+@Suppress("UNCHECKED_CAST")
 class Course() {
     private var geoPoints = ArrayList<AdvancedGeoPoint>()
     private lateinit var gpxFile: File
@@ -49,6 +50,34 @@ class Course() {
         return geoPoints
     }
 
+    fun getHalfGeoPoints(): ArrayList<GeoPoint> {
+
+        val geoPointsResult = ArrayList<GeoPoint>()
+
+        for (i in 0 until geoPoints.size)
+            if(i%2==0)
+                geoPointsResult.add(geoPoints[i])
+
+        Log.w("ORIGINAL SIZE", geoPoints.size.toString())
+        Log.w("FINAL SIZE", geoPointsResult.size.toString())
+
+        return geoPointsResult
+    }
+
+    fun getPointEvery(mod: Int): ArrayList<GeoPoint> {
+
+        val geoPointsResult = ArrayList<GeoPoint>()
+
+        for (i in 0 until geoPoints.size)
+            if(i%mod==0)
+                geoPointsResult.add(geoPoints[i])
+
+        Log.w("ORIGINAL SIZE", geoPoints.size.toString())
+        Log.w("FINAL SIZE", geoPointsResult.size.toString())
+
+        return geoPointsResult
+    }
+
     fun maxAltitude(): Double {
         return highestPoint.altitude
     }
@@ -65,23 +94,23 @@ class Course() {
         return courseName
     }
 
-    fun boundingBox(): BoundingBox{
+    fun boundingBox(): BoundingBox {
         val padding = 0.0007
         return BoundingBox(farNorthPoint + padding, farEastPoint + padding, farSouthPoint - padding, farWestPoint - padding)
     }
 
-    private fun readPoints(string: String){
+    private fun readPoints(string: String) {
         readPoints(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(InputSource(StringReader(string))))
     }
 
-    private fun readPoints(file: File){
+    private fun readPoints(file: File) {
         try {
             readPoints(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file))
-        }catch (e: SAXParseException){
-            try{
+        } catch (e: SAXParseException) {
+            try {
                 file.appendText("</trk>\n</gpx>")
                 readPoints(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file))
-            }catch (e: SAXParseException){
+            } catch (e: SAXParseException) {
                 e.stackTrace
             }
         }
@@ -107,7 +136,7 @@ class Course() {
                     if (point.childNodes.item(j).nodeName == "time")
                         try {
                             date = formatter.parse(point.childNodes.item(j).textContent)!!
-                        }catch (e: ParseException){
+                        } catch (e: ParseException) {
                             formatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ITALIAN)
                             date = formatter.parse(point.childNodes.item(j).textContent)!!
                         }
@@ -125,10 +154,10 @@ class Course() {
 
                 val lastGeoPoint = geoPoints.last()
 
-                farNorthPoint = if(lastGeoPoint.latitude > farNorthPoint) lastGeoPoint.latitude else farNorthPoint
-                farSouthPoint = if(lastGeoPoint.latitude < farSouthPoint) lastGeoPoint.latitude else farSouthPoint
-                farEastPoint = if(lastGeoPoint.longitude > farEastPoint) lastGeoPoint.longitude else farEastPoint
-                farWestPoint = if(lastGeoPoint.longitude < farWestPoint) lastGeoPoint.longitude else farWestPoint
+                farNorthPoint = if (lastGeoPoint.latitude > farNorthPoint) lastGeoPoint.latitude else farNorthPoint
+                farSouthPoint = if (lastGeoPoint.latitude < farSouthPoint) lastGeoPoint.latitude else farSouthPoint
+                farEastPoint = if (lastGeoPoint.longitude > farEastPoint) lastGeoPoint.longitude else farEastPoint
+                farWestPoint = if (lastGeoPoint.longitude < farWestPoint) lastGeoPoint.longitude else farWestPoint
 
                 if (lastGeoPoint.altitude < lowestPoint.altitude)
                     lowestPoint = lastGeoPoint

@@ -23,11 +23,13 @@ import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.osmdroid.config.Configuration
+import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import java.io.*
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 
 @Suppress("DEPRECATION")
@@ -89,6 +91,7 @@ class CourseViewerActivity : AppCompatActivity() {
         id_map_gpxViewer.overlays.add(overlayRotation)
 
         lateinit var course: Course
+        lateinit var limitedGeoPoints: ArrayList<GeoPoint>
 
         if (intent.action == Intent.ACTION_VIEW) {
             course = Course(handleReceiveGpx(intent))
@@ -101,36 +104,40 @@ class CourseViewerActivity : AppCompatActivity() {
         }.invokeOnCompletion {
             CoroutineScope(Main).launch {
                 toolbar_course_viewer.setTitleTextColor(Color.WHITE)
-                drawBlankMap(course, id_map_gpxViewer, loading_course_circle)
+
+                Log.w("Initial size", course.geoPoints().size.toString())
 
             }.invokeOnCompletion {
-
                 id_map_gpxViewer.controller.animateTo(course.centralPoint())
                 id_map_gpxViewer.zoomToBoundingBox(course.boundingBox(), true)
                 toolbar_course_viewer.title = course.courseName()
+
+                limitedGeoPoints = course.getPointEvery(4)
+
+                button_blankMap.performClick()
             }
         }
 
         button_blankMap.setOnClickListener {
             CoroutineScope(Main).launch {
-                drawBlankMap(course, id_map_gpxViewer, loading_course_circle)
+                drawBlankMap(limitedGeoPoints, id_map_gpxViewer, loading_course_circle)
             }
         }
 
         button_slope.setOnClickListener {
             CoroutineScope(Main).launch {
-                drawSlopeMap(course, id_map_gpxViewer, loading_course_circle)
+                drawSlopeMap(limitedGeoPoints, id_map_gpxViewer, loading_course_circle)
             }
         }
 
         button_altitude_difference.setOnClickListener {
             CoroutineScope(Main).launch {
-                drawAltitudeDifferenceMap(course, id_map_gpxViewer, loading_course_circle)
+                drawAltitudeDifferenceMap(course, limitedGeoPoints, id_map_gpxViewer, loading_course_circle)
             }
         }
 
         id_map_gpxViewer.setOnTouchListener { view, motionEvent ->
-            when(motionEvent.action){
+            when (motionEvent.action) {
                 MotionEvent.ACTION_DOWN -> scrollview_course_viewer.requestDisallowInterceptTouchEvent(true)
                 MotionEvent.ACTION_UP -> scrollview_course_viewer.requestDisallowInterceptTouchEvent(false)
             }
@@ -139,17 +146,17 @@ class CourseViewerActivity : AppCompatActivity() {
 
     }
 
-    private suspend fun drawBlankMap(course: Course, map: MapView, loadingCourseCircle: ProgressBar) {
+    private suspend fun drawBlankMap(geoPoints: ArrayList<GeoPoint>, map: MapView, loadingCourseCircle: ProgressBar) {
         map.overlayManager.removeAll(map.overlays)
 
         map.visibility = View.INVISIBLE
         loadingCourseCircle.visibility = View.VISIBLE
 
         withContext(Default) {
-            for (i in 1 until course.geoPoints().size) {
+            for (i in 1 until geoPoints.size) {
                 val seg = Polyline()
-                seg.addPoint(course.geoPoints()[i - 1])
-                seg.addPoint(course.geoPoints()[i])
+                seg.addPoint(geoPoints[i - 1])
+                seg.addPoint(geoPoints[i])
 
                 seg.outlinePaint.strokeCap = Paint.Cap.ROUND
                 withContext(Main) {
@@ -163,7 +170,7 @@ class CourseViewerActivity : AppCompatActivity() {
     }
 
 
-    private suspend fun drawAltitudeDifferenceMap(course: Course, map: MapView, loadingCourseCircle: ProgressBar) {
+    private suspend fun drawAltitudeDifferenceMap(course: Course, geoPoints: ArrayList<GeoPoint>, map: MapView, loadingCourseCircle: ProgressBar) {
         map.overlayManager.clear()
 
         val maxAltitude = course.maxAltitude()
@@ -173,12 +180,12 @@ class CourseViewerActivity : AppCompatActivity() {
         loadingCourseCircle.visibility = View.VISIBLE
 
         withContext(Default) {
-            for (i in 1 until course.geoPoints().size) {
+            for (i in 1 until geoPoints.size) {
                 val seg = Polyline()
-                seg.addPoint(course.geoPoints()[i - 1])
-                seg.addPoint(course.geoPoints()[i])
+                seg.addPoint(geoPoints[i - 1])
+                seg.addPoint(geoPoints[i])
 
-                var colorModifier: Int = (((course.geoPoints()[i].altitude - minAltitude) / (maxAltitude - minAltitude)) * 255.0).toInt()
+                var colorModifier: Int = (((geoPoints[i].altitude - minAltitude) / (maxAltitude - minAltitude)) * 255.0).toInt()
 
                 if (colorModifier > 255)
                     colorModifier = 255
@@ -195,18 +202,18 @@ class CourseViewerActivity : AppCompatActivity() {
         loadingCourseCircle.visibility = View.INVISIBLE
     }
 
-    private suspend fun drawSlopeMap(course: Course, map: MapView, loadingCourseCircle: ProgressBar) {
+    private suspend fun drawSlopeMap(geoPoints: ArrayList<GeoPoint>, map: MapView, loadingCourseCircle: ProgressBar) {
         map.overlayManager.clear()
 
         map.visibility = View.INVISIBLE
         loadingCourseCircle.visibility = View.VISIBLE
 
         withContext(Default) {
-            for (i in 0 until course.geoPoints().size - 1) {
+            for (i in 0 until geoPoints.size - 1) {
                 val seg = Polyline()
 
-                seg.addPoint(course.geoPoints()[i])
-                seg.addPoint(course.geoPoints()[i + 1])
+                seg.addPoint(geoPoints[i])
+                seg.addPoint(geoPoints[i + 1])
 
                 val distance = seg.actualPoints.last().distanceToAsDouble(seg.actualPoints.first())
                 val altitude = seg.actualPoints.last().altitude - seg.actualPoints.first().altitude
@@ -241,8 +248,3 @@ class CourseViewerActivity : AppCompatActivity() {
         loadingCourseCircle.visibility = View.INVISIBLE
     }
 }
-
-fun ScrollView.onTouchEvent() {
-
-}
-

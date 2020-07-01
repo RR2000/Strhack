@@ -1,6 +1,7 @@
 package com.rondinella.strhack.ui.main
 
 import android.app.Activity
+import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -8,6 +9,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.RecyclerView
@@ -90,27 +92,39 @@ class NewTrackFragment : Fragment() {
             false
         }
 
+        var isRecording = false
 
+        start_stop_button.setOnClickListener {
+            if(!isRecording){//START RECORDING
+                start_stop_button.text = getString(R.string.stop_recording)
 
-        id_start.setOnClickListener {
-            if(hasPermissions(parentActivity)) {
-                activity!!.startService(Intent(context, TrackerService().javaClass))
+                if(hasPermissions(parentActivity)) {
+                    activity!!.startService(Intent(context, TrackerService().javaClass))
 
-                GpxFileWriter.WrittenPolylineData.getPolyline().observe(this, androidx.lifecycle.Observer { polyline ->
-                    id_map.overlayManager.remove(courseLine)
-                    courseLine = polyline
-                    id_map.overlayManager.add(courseLine)
-                })
-            }else{
-                askPermissions(parentActivity)
+                    GpxFileWriter.WrittenPolylineData.getPolyline().observe(this, androidx.lifecycle.Observer { polyline ->
+                        id_map.overlayManager.remove(courseLine)
+                        courseLine = polyline
+                        id_map.overlayManager.add(courseLine)
+                    })
+                }else{
+                    askPermissions(parentActivity)
+                }
+
+                isRecording = true
+            }else{//STOP RECORDING
+                start_stop_button.text = getString(R.string.start_recording)
+
+                AlertDialog.Builder(parentActivity)
+                    .setTitle("Che fai?")
+                    .setMessage("Sei sicuro di voler terminare il giro?")
+                    .setPositiveButton("Termina") { dialogInterface, i ->
+                        id_map.overlayManager.remove(courseLine)
+                        courseLine = Polyline()
+                        activity!!.stopService(Intent(context, TrackerService().javaClass))
+                        isRecording = false
+                    }.setNegativeButton("Continua a registrare", null).show()
+
             }
-        }
-
-        id_stop.setOnClickListener {
-
-            id_map.overlayManager.remove(courseLine)
-            courseLine = Polyline()
-            activity!!.stopService(Intent(context, TrackerService().javaClass))
         }
 
         id_centra.setOnClickListener {
