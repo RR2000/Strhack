@@ -8,15 +8,12 @@ import android.os.Bundle
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import android.view.View.OnTouchListener
 import android.widget.ProgressBar
-import android.widget.ScrollView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
 import com.rondinella.strhack.R
-import com.rondinella.strhack.traker.Course
+import com.rondinella.strhack.tracker.Course
 import kotlinx.android.synthetic.main.activity_course_viewer.*
-import kotlinx.android.synthetic.main.fragment_routeslist.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.Dispatchers.Main
@@ -29,7 +26,6 @@ import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import java.io.*
 import kotlin.math.abs
-import kotlin.math.roundToInt
 
 
 @Suppress("DEPRECATION")
@@ -144,6 +140,7 @@ class CourseViewerActivity : AppCompatActivity() {
             view.onTouchEvent(motionEvent)
         }
 
+        setTheme(R.style.AppTheme)
     }
 
     private suspend fun drawBlankMap(geoPoints: ArrayList<GeoPoint>, map: MapView, loadingCourseCircle: ProgressBar) {

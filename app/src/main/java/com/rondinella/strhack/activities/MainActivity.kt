@@ -1,20 +1,24 @@
 package com.rondinella.strhack.activities
 
 import android.os.Bundle
-import com.google.android.material.tabs.TabLayout
+import android.os.StrictMode
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentActivity
+import androidx.preference.PreferenceManager
 import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import com.rondinella.strhack.R
 import com.rondinella.strhack.ui.main.SectionsPagerAdapter
 import com.rondinella.strhack.utils.askPermissions
 import com.rondinella.strhack.utils.hasPermissions
+import org.osmdroid.config.Configuration
 
 
 class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        setTheme(R.style.AppTheme_NoActionBar)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
@@ -41,5 +45,10 @@ class MainActivity : AppCompatActivity() {
         }.attach()
         //Used to prevent blank map when go back from other fragment.
         viewPager.offscreenPageLimit = 1
+
+        //trying not to get error with sql things
+        val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
+        StrictMode.setThreadPolicy(policy)
+        Configuration.getInstance().load(applicationContext, PreferenceManager.getDefaultSharedPreferences(applicationContext))
     }
 }
