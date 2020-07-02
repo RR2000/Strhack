@@ -3,10 +3,10 @@
 
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:minWidth="100dp">
+
 
     <Button
         android:id="@+id/id_centra"
@@ -15,12 +15,11 @@
         android:layout_marginEnd="10dp"
         android:layout_marginBottom="10dp"
         android:background="@drawable/circular_button"
-        android:backgroundTint="@color/light_blue"
         android:foreground="@drawable/center_map"
         android:foregroundGravity="center"
+        android:textColor="#FFFFFF"
         app:layout_constraintBottom_toBottomOf="@+id/id_map"
-        app:layout_constraintEnd_toEndOf="@+id/id_map"
-        tools:ignore="UnusedAttribute" /><!-- I have to check -->
+        app:layout_constraintEnd_toEndOf="@+id/id_map" /><!-- I have to check -->
 
     <org.osmdroid.views.MapView
         android:id="@+id/id_map"

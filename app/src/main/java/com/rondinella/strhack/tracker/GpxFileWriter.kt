@@ -1,4 +1,4 @@
-package com.rondinella.strhack.traker
+package com.rondinella.strhack.tracker
 
 import android.content.Context
 import android.util.Log

@@ -1,30 +1,24 @@
 package com.rondinella.strhack.ui.main
 
 import android.app.Activity
-import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
-import androidx.recyclerview.widget.RecyclerView
-import com.rondinella.strhack.traker.TrackerService
+import com.rondinella.strhack.tracker.TrackerService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.rondinella.strhack.R
-import com.rondinella.strhack.activities.MainActivity
-import com.rondinella.strhack.traker.GpxFileWriter
+import com.rondinella.strhack.tracker.GpxFileWriter
 import com.rondinella.strhack.utils.askPermissions
 import com.rondinella.strhack.utils.hasPermissions
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.activity_main.view.*
 import kotlinx.android.synthetic.main.fragment_newtrack.*
-import kotlinx.android.synthetic.main.fragment_routeslist.*
 import org.osmdroid.api.IMapController
 import org.osmdroid.config.Configuration
 import org.osmdroid.util.GeoPoint
@@ -113,7 +107,7 @@ class NewTrackFragment : Fragment() {
                 isRecording = true
             }else{//STOP RECORDING
                 start_stop_button.text = getString(R.string.start_recording)
-
+                //@TODO LOCALIZE DIALOG
                 AlertDialog.Builder(parentActivity)
                     .setTitle("Che fai?")
                     .setMessage("Sei sicuro di voler terminare il giro?")

@@ -1,7 +1,6 @@
-package com.rondinella.strhack.traker
+package com.rondinella.strhack.tracker
 
 import android.util.Log
-import android.widget.Toast
 import com.example.strhack.AdvancedGeoPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.Main
@@ -15,7 +14,6 @@ import org.xml.sax.InputSource
 import org.xml.sax.SAXParseException
 import java.io.File
 import java.io.StringReader
-import java.sql.Time
 import java.text.DateFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat

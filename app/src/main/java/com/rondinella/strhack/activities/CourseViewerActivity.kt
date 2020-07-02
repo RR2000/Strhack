@@ -9,7 +9,10 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.widget.ProgressBar
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.children
 import androidx.preference.PreferenceManager
 import com.rondinella.strhack.R
 import com.rondinella.strhack.tracker.Course
@@ -76,6 +79,7 @@ class CourseViewerActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_course_viewer)
 
+
         Configuration.getInstance().load(applicationContext, PreferenceManager.getDefaultSharedPreferences(applicationContext))
         id_map_gpxViewer.visibility = View.INVISIBLE
         loading_course_circle.visibility = View.VISIBLE
@@ -83,7 +87,7 @@ class CourseViewerActivity : AppCompatActivity() {
         //It removes standard button in order to use touch controls
         id_map_gpxViewer.setBuiltInZoomControls(false)
         id_map_gpxViewer.setMultiTouchControls(true)
-        val overlayRotation = RotationGestureOverlay(this, id_map_gpxViewer).apply { isEnabled = true }
+        val overlayRotation = RotationGestureOverlay(applicationContext, id_map_gpxViewer).apply { isEnabled = true }
         id_map_gpxViewer.overlays.add(overlayRotation)
 
         lateinit var course: Course
@@ -95,13 +99,12 @@ class CourseViewerActivity : AppCompatActivity() {
 
         CoroutineScope(Main).launch {
             if (intent.action != Intent.ACTION_VIEW) {
+                toolbar_course_viewer.inflateMenu(R.menu.menu_course_viewer)
                 course = Course(File(getExternalFilesDir(null).toString() + "/tracks/" + intent.getStringExtra("filename")))
             }
         }.invokeOnCompletion {
             CoroutineScope(Main).launch {
                 toolbar_course_viewer.setTitleTextColor(Color.WHITE)
-
-                Log.w("Initial size", course.geoPoints().size.toString())
 
             }.invokeOnCompletion {
                 id_map_gpxViewer.controller.animateTo(course.centralPoint())
@@ -112,6 +115,19 @@ class CourseViewerActivity : AppCompatActivity() {
 
                 button_blankMap.performClick()
             }
+        }
+
+        toolbar_course_viewer.setOnMenuItemClickListener {
+            if(it.itemId == R.id.button_remove_course) {
+                AlertDialog.Builder(this)
+                    .setTitle("Che fai?")
+                    .setMessage("Sei sicuro di voler ELIMINARE il giro?")
+                    .setPositiveButton("elimina") { dialogInterface, i ->
+                        File(getExternalFilesDir(null).toString() + "/tracks/" + intent.getStringExtra("filename")).delete()
+                        finish()//startActivity(Intent(this, MainActivity::class.java))
+                    }.setNegativeButton("ANNULLA", null).show()
+            }
+            true
         }
 
         button_blankMap.setOnClickListener {
@@ -139,7 +155,6 @@ class CourseViewerActivity : AppCompatActivity() {
             }
             view.onTouchEvent(motionEvent)
         }
-
         setTheme(R.style.AppTheme)
     }
 

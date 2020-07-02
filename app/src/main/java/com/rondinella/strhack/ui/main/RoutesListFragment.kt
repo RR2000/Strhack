@@ -3,15 +3,15 @@ package com.rondinella.strhack.ui.main
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.rondinella.strhack.R
 import com.rondinella.strhack.activities.CourseViewerActivity
-import com.rondinella.strhack.traker.GpxFileWriter
+import com.rondinella.strhack.tracker.GpxFileWriter
 import com.rondinella.strhack.utils.askPermissions
 import com.rondinella.strhack.utils.convertStringFilenameToStringName
 import com.rondinella.strhack.utils.hasPermissions
@@ -24,6 +24,8 @@ import java.io.File
 class RoutesListFragment : Fragment() {
 
     lateinit var parentActivity: Activity
+    private var routesFilenameName = Pair<ArrayList<String>, ArrayList<String>>(ArrayList(), ArrayList())
+    private lateinit var onClickListenerAdapter: View.OnClickListener
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -34,12 +36,15 @@ class RoutesListFragment : Fragment() {
         return root
     }
 
+    override fun onResume() {
+        refresh()
+        super.onResume()
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        var routesFilenameName = refreshRoutesFilenameName()
-
-        val onClickListenerAdapter = View.OnClickListener {
+        onClickListenerAdapter = View.OnClickListener {
             val position = id_gpx_list.getChildLayoutPosition(it)
             val intent = Intent(context, CourseViewerActivity::class.java).apply {
                 putExtra("filename", routesFilenameName.first[position])
@@ -47,29 +52,24 @@ class RoutesListFragment : Fragment() {
             startActivity(intent)
         }
 
-        val adapter = RoutesListAdapter(context, routesFilenameName.second, onClickListenerAdapter)
-        id_gpx_list.adapter = adapter
         id_gpx_list.layoutManager = LinearLayoutManager(context)
+        refresh()
 
         gpx_list_container.setOnRefreshListener {
-            routesFilenameName = refreshRoutesFilenameName()
-            id_gpx_list.adapter = RoutesListAdapter(context, routesFilenameName.second, onClickListenerAdapter)
+            refresh()
             gpx_list_container.isRefreshing = false
         }
     }
 
-    private fun refreshRoutesFilenameName(): Pair<ArrayList<String>, ArrayList<String>> {
+    private fun refresh() {
+
+        routesFilenameName = Pair(ArrayList(), ArrayList())
+
         val gpxFiles = ArrayList<File>()
         if (File(context!!.getExternalFilesDir(null).toString() + "/tracks").exists())
             gpxFiles.addAll(File(context!!.getExternalFilesDir(null).toString() + "/tracks").listFiles()!!)
 
-        gpxFiles.sort()
-
-
-        //
-
-
-        val routesFilenameName = Pair<ArrayList<String>, ArrayList<String>>(ArrayList(), ArrayList())
+        gpxFiles.sortDescending()
 
         if (hasPermissions(parentActivity)) {
             for (i in gpxFiles.indices) {
@@ -97,12 +97,10 @@ class RoutesListFragment : Fragment() {
                     }
                 }
             }
-        }else{
+            id_gpx_list.adapter = RoutesListAdapter(context, routesFilenameName.second, onClickListenerAdapter)
+        } else {
             askPermissions(parentActivity)
         }
-
-        return routesFilenameName
-
     }
 
     companion object {

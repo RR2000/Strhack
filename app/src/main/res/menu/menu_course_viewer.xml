@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/button_remove_course"
+        android:icon="@drawable/sharp_remove_black_36"
+        app:showAsAction="ifRoom"
+        android:title="@string/remove_course" />
+
+    <!-- Settings, should always be in the overflow -->
+
+</menu>
