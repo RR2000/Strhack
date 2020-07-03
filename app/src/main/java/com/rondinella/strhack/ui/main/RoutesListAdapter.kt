@@ -31,8 +31,8 @@ open class RoutesListAdapter internal constructor(context: Context?, data: List<
         val title = filename.substringAfter(".title.")
         val date = filename.substringAfter("date.").substringBefore(".title.")
 
-        if (routesFile[position].name == GpxFileWriter.WrittenFilenameData.getFilename().value) {//TODO localize
-            holder.routeName.text = "Percorso di questo momento! Non puoi aprirlo!"
+        if (routesFile[position].name == GpxFileWriter.WrittenFilenameData.getFilename().value) {
+            holder.routeName.text = context.getString(R.string.recording_in_progress)
             holder.routeName.setTextColor(context.getColor(R.color.red))
             holder.routeDate.text = convertStringFilenameDateToDate(date)
         } else {

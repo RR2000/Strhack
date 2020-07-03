@@ -17,4 +17,12 @@
     <string name="permits_error">Non riesco ad impostare i permessi! Impostali manualmente!</string>
     <string name="remove_course">Rimuovi percorso</string>
     <string name="edit_course">Modifica percorso</string>
+    <string name="delete_title">Che fai?</string>
+    <string name="delete_message">Sei sicuro di voler eliminare questo giro?</string>
+    <string name="delete">Elimina</string>
+    <string name="cancel">Annulla</string>
+    <string name="stop_recording_title">Che fai?</string>
+    <string name="stop_recording_message">Sei sicuro di voler terminare il giro?</string>
+    <string name="recording_in_progress">Registrazione del giro in corso…</string>
+    <string name="confirm_edit">Conferma modifiche</string>
 </resources>

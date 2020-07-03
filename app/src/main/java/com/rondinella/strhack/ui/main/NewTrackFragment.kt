@@ -130,16 +130,15 @@ class NewTrackFragment : Fragment() {
                 isRecording = true
             } else {//STOP RECORDING
                 start_stop_button.text = getString(R.string.start_recording)
-                //@TODO LOCALIZE DIALOG
                 AlertDialog.Builder(parentActivity)
-                    .setTitle("Che fai?")
-                    .setMessage("Sei sicuro di voler terminare il giro?")
-                    .setPositiveButton("Termina") { dialogInterface, i ->
+                    .setTitle(getString(R.string.stop_recording_title))
+                    .setMessage(getString(R.string.stop_recording_message))
+                    .setPositiveButton(getString(R.string.stop_recording)) { dialogInterface, i ->
                         id_map.overlayManager.remove(courseLine)
                         courseLine = Polyline()
                         activity!!.stopService(Intent(context, TrackerService().javaClass))
                         isRecording = false
-                    }.setNegativeButton("Continua a registrare", null).show()
+                    }.setNegativeButton(getString(R.string.cancel), null).show()
 
             }
         }

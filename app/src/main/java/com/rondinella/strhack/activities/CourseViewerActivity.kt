@@ -20,6 +20,7 @@ import kotlinx.android.synthetic.main.activity_course_viewer.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.NonCancellable.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.osmdroid.config.Configuration
@@ -42,10 +43,8 @@ class CourseViewerActivity : AppCompatActivity() {
             buf.read(bytes, 0, bytes.size)
             buf.close()
         } catch (e: FileNotFoundException) {
-            // TODO Auto-generated catch block
             e.printStackTrace()
         } catch (e: IOException) {
-            // TODO Auto-generated catch block
             e.printStackTrace()
         }
         return bytes
@@ -125,14 +124,13 @@ class CourseViewerActivity : AppCompatActivity() {
 
         toolbar_course_viewer.setOnMenuItemClickListener {
             if(it.itemId == R.id.button_remove_course) {
-                //TODO lolalize dialog
                 AlertDialog.Builder(this)
-                    .setTitle("Che fai?")
-                    .setMessage("Sei sicuro di voler ELIMINARE il giro?")
-                    .setPositiveButton("elimina") { dialogInterface, i ->
+                    .setTitle(getString(R.string.delete_title))
+                    .setMessage(getString(R.string.delete_message))
+                    .setPositiveButton(getString(R.string.delete)) { dialogInterface, i ->
                         File(getExternalFilesDir(null).toString() + "/tracks/" + intent.getStringExtra("filename")).delete()
                         finish()//startActivity(Intent(this, MainActivity::class.java))
-                    }.setNegativeButton("ANNULLA", null).show()
+                    }.setNegativeButton(getString(R.string.cancel), null).show()
             }else if(it.itemId == R.id.button_edit_course){
                 val intentEditor = Intent(this, CourseEditorActivity::class.java)
                 intentEditor.putExtra("filename",intent.getStringExtra("filename"))
