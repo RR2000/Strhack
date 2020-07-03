@@ -74,6 +74,12 @@ class CourseViewerActivity : AppCompatActivity() {
         }
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if(requestCode == 42 && resultCode == 0)
+            finish()
+        super.onActivityResult(requestCode, resultCode, data)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.AppTheme_NoActionBar)
         super.onCreate(savedInstanceState)
@@ -130,7 +136,7 @@ class CourseViewerActivity : AppCompatActivity() {
             }else if(it.itemId == R.id.button_edit_course){
                 val intentEditor = Intent(this, CourseEditorActivity::class.java)
                 intentEditor.putExtra("filename",intent.getStringExtra("filename"))
-                startActivity(intentEditor)
+                startActivityForResult(intentEditor, 42)
             }
             true
         }
