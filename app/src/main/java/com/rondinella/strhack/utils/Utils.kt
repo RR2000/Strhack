@@ -85,9 +85,15 @@ fun convertLongToTime(time: Long): String {
     return formatter.format(date)
 }
 
-fun convertStringFilenameToStringName(date: String, course_of: String, at_time: String): String {
+fun convertStringFilenameDateToTitle(date: String, course_of: String, at_time: String): String {
     val parser = SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss'Z'", Locale.ITALIAN)
     val formatter = SimpleDateFormat("'${course_of} 'dd MMMM yyyy '${at_time}' HH:mm", Locale.ITALIAN)
+    return formatter.format(parser.parse(date)!!)
+}
+
+fun convertStringFilenameDateToDate(date: String): String {
+    val parser = SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss'Z'", Locale.ITALIAN)
+    val formatter = SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.ITALIAN)
     return formatter.format(parser.parse(date)!!)
 }
 

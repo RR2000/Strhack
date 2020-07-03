@@ -17,8 +17,6 @@
         tools:ignore="MissingConstraints">
     </androidx.appcompat.widget.Toolbar>
 
-
-
     <ScrollView
         android:id="@+id/scrollview_course_viewer"
         android:layout_width="match_parent"

@@ -6,14 +6,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.rondinella.strhack.R
 import com.rondinella.strhack.activities.CourseViewerActivity
-import com.rondinella.strhack.tracker.GpxFileWriter
 import com.rondinella.strhack.utils.askPermissions
-import com.rondinella.strhack.utils.convertStringFilenameToStringName
 import com.rondinella.strhack.utils.hasPermissions
 import kotlinx.android.synthetic.main.fragment_routeslist.*
 import java.io.File
@@ -40,19 +37,22 @@ class RoutesListFragment : Fragment() {
         refresh()
         super.onResume()
     }
-
+    var gpxFiles = ArrayList<File>()
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+
 
         onClickListenerAdapter = View.OnClickListener {
             val position = id_gpx_list.getChildLayoutPosition(it)
             val intent = Intent(context, CourseViewerActivity::class.java).apply {
-                putExtra("filename", routesFilenameName.first[position])
+                putExtra("filename", gpxFiles[position].name)
             }
             startActivity(intent)
         }
 
         id_gpx_list.layoutManager = LinearLayoutManager(context)
+
         refresh()
 
         gpx_list_container.setOnRefreshListener {
@@ -60,7 +60,24 @@ class RoutesListFragment : Fragment() {
             gpx_list_container.isRefreshing = false
         }
     }
+    private fun refresh() {
 
+        gpxFiles = ArrayList()
+
+
+        if (File(context!!.getExternalFilesDir(null).toString() + "/tracks").exists())
+            gpxFiles.addAll(File(context!!.getExternalFilesDir(null).toString() + "/tracks").listFiles()!!)
+
+        gpxFiles.sortDescending()
+
+        if (hasPermissions(parentActivity)) {
+
+            id_gpx_list.adapter = RoutesListAdapter(context, gpxFiles, onClickListenerAdapter)
+        } else {
+            askPermissions(parentActivity)
+        }
+    }
+    /*
     private fun refresh() {
 
         routesFilenameName = Pair(ArrayList(), ArrayList())
@@ -101,7 +118,7 @@ class RoutesListFragment : Fragment() {
         } else {
             askPermissions(parentActivity)
         }
-    }
+    }*/
 
     companion object {
 

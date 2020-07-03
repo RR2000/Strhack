@@ -119,6 +119,7 @@ class CourseViewerActivity : AppCompatActivity() {
 
         toolbar_course_viewer.setOnMenuItemClickListener {
             if(it.itemId == R.id.button_remove_course) {
+                //TODO lolalize dialog
                 AlertDialog.Builder(this)
                     .setTitle("Che fai?")
                     .setMessage("Sei sicuro di voler ELIMINARE il giro?")

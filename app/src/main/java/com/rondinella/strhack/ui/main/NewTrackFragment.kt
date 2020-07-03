@@ -2,6 +2,7 @@ package com.rondinella.strhack.ui.main
 
 import android.app.Activity
 import android.content.Intent
+import android.location.Location
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -13,6 +14,7 @@ import androidx.preference.PreferenceManager
 import com.rondinella.strhack.tracker.TrackerService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.tasks.OnSuccessListener
 import com.rondinella.strhack.R
 import com.rondinella.strhack.tracker.GpxFileWriter
 import com.rondinella.strhack.utils.askPermissions
@@ -76,36 +78,57 @@ class NewTrackFragment : Fragment() {
         //Set max zoom out
         id_map.minZoomLevel = 8.0
 
+        var followPosition = false
+
         //Prevent swipe while touching the map
         id_map.setOnTouchListener { _, motionEvent ->
             if (motionEvent.action == MotionEvent.ACTION_DOWN) {
                 requireActivity().view_pager.isUserInputEnabled = false
+                followPosition = false
             } else if (motionEvent.action == MotionEvent.ACTION_UP) {
                 requireActivity().view_pager.isUserInputEnabled = true
             }
             false
         }
 
+        val centerOnSuccess: OnSuccessListener<in Location>
+
+        centerOnSuccess = OnSuccessListener { location ->
+            if (location != null) {
+                id_map.mapOrientation = 0.0f
+                id_map.controller.animateTo(GeoPoint(location.latitude, location.longitude))
+                id_map.controller.setZoom(20.0)
+
+                id_map.visibility = View.INVISIBLE
+                id_map.visibility = View.VISIBLE
+            }
+        }
+
         var isRecording = false
 
+
         start_stop_button.setOnClickListener {
-            if(!isRecording){//START RECORDING
+            if (!isRecording) {//START RECORDING
                 start_stop_button.text = getString(R.string.stop_recording)
 
-                if(hasPermissions(parentActivity)) {
+                if (hasPermissions(parentActivity)) {
                     activity!!.startService(Intent(context, TrackerService().javaClass))
 
                     GpxFileWriter.WrittenPolylineData.getPolyline().observe(this, androidx.lifecycle.Observer { polyline ->
                         id_map.overlayManager.remove(courseLine)
                         courseLine = polyline
                         id_map.overlayManager.add(courseLine)
+
+                        if(followPosition)
+                            fusedLocationClient.lastLocation.addOnSuccessListener(centerOnSuccess)
                     })
-                }else{
+
+                } else {
                     askPermissions(parentActivity)
                 }
 
                 isRecording = true
-            }else{//STOP RECORDING
+            } else {//STOP RECORDING
                 start_stop_button.text = getString(R.string.start_recording)
                 //@TODO LOCALIZE DIALOG
                 AlertDialog.Builder(parentActivity)
@@ -121,50 +144,43 @@ class NewTrackFragment : Fragment() {
             }
         }
 
-        id_centra.setOnClickListener {
-            fusedLocationClient.lastLocation
-                .addOnSuccessListener { location ->
-                    if (location != null) {
-                        id_map.mapOrientation = 0.0f
-                        id_map.controller.animateTo(GeoPoint(location.latitude, location.longitude))
-                        id_map.controller.setZoom(20.0)
 
-                        id_map.visibility = View.INVISIBLE
-                        id_map.visibility = View.VISIBLE
-                    }
-                }
+
+        id_centra.setOnClickListener {
+            fusedLocationClient.lastLocation.addOnSuccessListener(centerOnSuccess)
+            followPosition = true
         }
 
         id_centra.performClick()
-
     }
 
-    override fun onResume() {
-        super.onResume()
-        Configuration.getInstance().load(requireContext(), PreferenceManager.getDefaultSharedPreferences(requireContext()))
-        id_map.overlayManager.remove(courseLine)
 
-        id_map.onResume()
 
-    }
+override fun onResume() {
+    super.onResume()
+    Configuration.getInstance().load(requireContext(), PreferenceManager.getDefaultSharedPreferences(requireContext()))
+    id_map.overlayManager.remove(courseLine)
+    id_map.onResume()
 
-    override fun onPause() {
-        super.onPause()
-        Configuration.getInstance().save(requireContext(), PreferenceManager.getDefaultSharedPreferences(requireContext()))
-        id_map.onPause()
-    }
+}
 
-    //I don't know what this method does... I know I shouldn't delete it
-    companion object {
-        private const val ARG_SECTION_NUMBER = "section_number"
+override fun onPause() {
+    super.onPause()
+    Configuration.getInstance().save(requireContext(), PreferenceManager.getDefaultSharedPreferences(requireContext()))
+    id_map.onPause()
+}
 
-        @JvmStatic
-        fun newInstance(sectionNumber: Int): NewTrackFragment {
-            return NewTrackFragment().apply {
-                arguments = Bundle().apply {
-                    putInt(ARG_SECTION_NUMBER, sectionNumber)
-                }
+//I don't know what this method does... I know I shouldn't delete it
+companion object {
+    private const val ARG_SECTION_NUMBER = "section_number"
+
+    @JvmStatic
+    fun newInstance(sectionNumber: Int): NewTrackFragment {
+        return NewTrackFragment().apply {
+            arguments = Bundle().apply {
+                putInt(ARG_SECTION_NUMBER, sectionNumber)
             }
         }
     }
+}
 }
