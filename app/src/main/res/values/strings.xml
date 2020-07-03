@@ -15,5 +15,6 @@
     <string name="at_time">alle</string>
     <string name="strhack_is_recording">Strhack sta registrando…</string>
     <string name="permits_error">Non riesco ad impostare i permessi! Impostali manualmente!</string>
-    <string name="remove_course">Rimuovi giro</string>
+    <string name="remove_course">Rimuovi percorso</string>
+    <string name="edit_course">Modifica percorso</string>
 </resources>

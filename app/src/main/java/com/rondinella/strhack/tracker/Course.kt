@@ -25,7 +25,6 @@ import kotlin.collections.ArrayList
 class Course() {
     private var geoPoints = ArrayList<AdvancedGeoPoint>()
     private lateinit var gpxFile: File
-    private var courseName: String = ""
 
     private var farNorthPoint = -90.0
     private var farSouthPoint = 90.0
@@ -46,20 +45,6 @@ class Course() {
 
     fun geoPoints(): ArrayList<AdvancedGeoPoint> {
         return geoPoints
-    }
-
-    fun getHalfGeoPoints(): ArrayList<GeoPoint> {
-
-        val geoPointsResult = ArrayList<GeoPoint>()
-
-        for (i in 0 until geoPoints.size)
-            if(i%2==0)
-                geoPointsResult.add(geoPoints[i])
-
-        Log.w("ORIGINAL SIZE", geoPoints.size.toString())
-        Log.w("FINAL SIZE", geoPointsResult.size.toString())
-
-        return geoPointsResult
     }
 
     fun getPointEvery(mod: Int): ArrayList<GeoPoint> {
@@ -86,10 +71,6 @@ class Course() {
 
     fun centralPoint(): GeoPoint {
         return centralPoint
-    }
-
-    fun courseName(): String {
-        return courseName
     }
 
     fun boundingBox(): BoundingBox {
@@ -166,11 +147,6 @@ class Course() {
             val latitudeMid = (farNorthPoint + farSouthPoint) / 2.0
             val longitudeMid = (farEastPoint + farWestPoint) / 2.0
             centralPoint = GeoPoint(latitudeMid, longitudeMid)
-
-            courseName = if (xmlDoc.getElementsByTagName("name").length > 0)
-                xmlDoc.getElementsByTagName("name").item(0).textContent.toString()
-            else
-                DateFormat.getDateInstance(DateFormat.FULL).format(geoPoints.first().date)
         }
 
     }

@@ -47,6 +47,7 @@ class RoutesListFragment : Fragment() {
             val position = id_gpx_list.getChildLayoutPosition(it)
             val intent = Intent(context, CourseViewerActivity::class.java).apply {
                 putExtra("filename", gpxFiles[position].name)
+                putExtra("title", (id_gpx_list.adapter as RoutesListAdapter).getCourseTitle(position))
             }
             startActivity(intent)
         }
@@ -64,61 +65,17 @@ class RoutesListFragment : Fragment() {
 
         gpxFiles = ArrayList()
 
-
         if (File(context!!.getExternalFilesDir(null).toString() + "/tracks").exists())
             gpxFiles.addAll(File(context!!.getExternalFilesDir(null).toString() + "/tracks").listFiles()!!)
 
         gpxFiles.sortDescending()
 
         if (hasPermissions(parentActivity)) {
-
             id_gpx_list.adapter = RoutesListAdapter(context, gpxFiles, onClickListenerAdapter)
         } else {
             askPermissions(parentActivity)
         }
     }
-    /*
-    private fun refresh() {
-
-        routesFilenameName = Pair(ArrayList(), ArrayList())
-
-        val gpxFiles = ArrayList<File>()
-        if (File(context!!.getExternalFilesDir(null).toString() + "/tracks").exists())
-            gpxFiles.addAll(File(context!!.getExternalFilesDir(null).toString() + "/tracks").listFiles()!!)
-
-        gpxFiles.sortDescending()
-
-        if (hasPermissions(parentActivity)) {
-            for (i in gpxFiles.indices) {
-                if (GpxFileWriter.WrittenFilenameData.getFilename().value != null)
-                    if (gpxFiles[i].name == GpxFileWriter.WrittenFilenameData.getFilename().value)
-                        continue
-
-                if (gpxFiles[i].name.endsWith(".gpx", true)) {
-                    routesFilenameName.first.add(gpxFiles[i].name) //add filename
-                    if (gpxFiles[i].name.endsWith(".strhack.gpx", true)) {
-                        val filename = gpxFiles[i].name.replace(".strhack.gpx", "")
-                        val title = filename.substringAfter(".title.")
-                        if (title == "") {
-                            routesFilenameName.second.add(
-                                convertStringFilenameToStringName(
-                                    filename.substringAfter("date.").substringBefore(".title."),
-                                    getString(R.string.course_of),
-                                    getString(R.string.at_time)
-                                )
-                            )
-                        } else
-                            routesFilenameName.second.add(title)
-                    } else {
-                        routesFilenameName.second.add(gpxFiles[i].name)//add visualized name
-                    }
-                }
-            }
-            id_gpx_list.adapter = RoutesListAdapter(context, routesFilenameName.second, onClickListenerAdapter)
-        } else {
-            askPermissions(parentActivity)
-        }
-    }*/
 
     companion object {
 

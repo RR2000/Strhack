@@ -75,10 +75,10 @@ class CourseViewerActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-
+        setTheme(R.style.AppTheme_NoActionBar)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_course_viewer)
-
+        toolbar_course_viewer.setTitleTextColor(Color.WHITE)
 
         Configuration.getInstance().load(applicationContext, PreferenceManager.getDefaultSharedPreferences(applicationContext))
         id_map_gpxViewer.visibility = View.INVISIBLE
@@ -95,21 +95,21 @@ class CourseViewerActivity : AppCompatActivity() {
 
         if (intent.action == Intent.ACTION_VIEW) {
             course = Course(handleReceiveGpx(intent))
+            title = course.geoPoints()[0].date.toString()
         }
 
         CoroutineScope(Main).launch {
             if (intent.action != Intent.ACTION_VIEW) {
                 toolbar_course_viewer.inflateMenu(R.menu.menu_course_viewer)
                 course = Course(File(getExternalFilesDir(null).toString() + "/tracks/" + intent.getStringExtra("filename")))
+                toolbar_course_viewer.title = intent.getStringExtra("title")
             }
         }.invokeOnCompletion {
             CoroutineScope(Main).launch {
-                toolbar_course_viewer.setTitleTextColor(Color.WHITE)
 
             }.invokeOnCompletion {
                 id_map_gpxViewer.controller.animateTo(course.centralPoint())
                 id_map_gpxViewer.zoomToBoundingBox(course.boundingBox(), true)
-                toolbar_course_viewer.title = course.courseName()
 
                 limitedGeoPoints = course.getPointEvery(4)
 
@@ -127,6 +127,10 @@ class CourseViewerActivity : AppCompatActivity() {
                         File(getExternalFilesDir(null).toString() + "/tracks/" + intent.getStringExtra("filename")).delete()
                         finish()//startActivity(Intent(this, MainActivity::class.java))
                     }.setNegativeButton("ANNULLA", null).show()
+            }else if(it.itemId == R.id.button_edit_course){
+                val intentEditor = Intent(this, CourseEditorActivity::class.java)
+                intentEditor.putExtra("filename",intent.getStringExtra("filename"))
+                startActivity(intentEditor)
             }
             true
         }
@@ -156,7 +160,6 @@ class CourseViewerActivity : AppCompatActivity() {
             }
             view.onTouchEvent(motionEvent)
         }
-        setTheme(R.style.AppTheme)
     }
 
     private suspend fun drawBlankMap(geoPoints: ArrayList<GeoPoint>, map: MapView, loadingCourseCircle: ProgressBar) {
