@@ -30,4 +30,12 @@
         app:layout_constraintTop_toTopOf="parent"
         android:importantForAutofill="no"
         tools:ignore="LabelFor" />
+
+    <CheckBox
+        android:id="@+id/check_delete_pastrocchi"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="CheckBox"
+        tools:layout_editor_absoluteX="17dp"
+        tools:layout_editor_absoluteY="96dp" />
 </androidx.constraintlayout.widget.ConstraintLayout>

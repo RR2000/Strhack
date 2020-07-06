@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch
 import org.osmdroid.util.BoundingBox
+import org.osmdroid.util.Distance
 import org.osmdroid.util.GeoPoint
 import org.w3c.dom.Document
 import org.w3c.dom.Node
@@ -20,6 +21,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.collections.ArrayList
+import kotlin.properties.Delegates
 
 @Suppress("UNCHECKED_CAST")
 class Course() {
@@ -33,6 +35,8 @@ class Course() {
     private var highestPoint = GeoPoint(0.0, 0.0, -5000.0)
     private var lowestPoint = GeoPoint(0.0, 0.0, 5000.0)
     private lateinit var centralPoint: GeoPoint
+
+    var distance: Double = 0.0
 
     constructor(text: String) : this() {
         readPoints(text)
@@ -130,6 +134,10 @@ class Course() {
                         altitude
                     )
                 )
+
+                val lastIndex = geoPoints.lastIndex
+                if(lastIndex > 0)
+                    distance += (geoPoints[lastIndex].distanceToAsDouble(geoPoints[lastIndex-1]))
 
                 val lastGeoPoint = geoPoints.last()
 

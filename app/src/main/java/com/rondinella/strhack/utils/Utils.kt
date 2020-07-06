@@ -7,10 +7,8 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import android.util.Log
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat.startActivity
 import com.example.strhack.AdvancedGeoPoint
 import com.rondinella.strhack.R
 import org.osmdroid.util.GeoPoint
@@ -122,6 +120,46 @@ fun readGeoPoints(file: File): List<GeoPoint> {
         )
     }
     return mMap
+}
+
+fun writePointsOnFile(points: ArrayList<AdvancedGeoPoint>, filePath: String){
+
+    val file = File(filePath)
+
+    if (!file.exists())
+        file.createNewFile()
+    else{
+        file.delete()
+        file.createNewFile()
+    }
+
+    file.appendText(
+        """
+            <gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxx="http://www.garmin.com/xmlschemas/GpxExtensions/v3" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" creator="StrHack" version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd">
+            <metadata>
+                <time>${convertLongToTime(Date().time)}</time>
+            </metadata>
+            <trk>
+                <name>Test</name>
+            
+            """.trimIndent()
+    )
+
+    for(point in points) {
+
+        file.appendText(
+            """
+            <trkpt lat="${point.latitude}" lon="${point.longitude}">
+                <ele>${point.altitude}</ele>
+                <time>${convertLongToTime(point.date.time)}</time>
+                
+                """.trimIndent()
+        )
+
+        file.appendText("\n</trkpt>\n")
+    }
+
+    file.appendText("</trk>\n</gpx>")
 }
 
 //It converts a GPX file into a list of AdvancedGeoPoints

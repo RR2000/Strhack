@@ -30,6 +30,7 @@ import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import java.io.*
 import kotlin.math.abs
+import kotlin.math.round
 
 
 @Suppress("DEPRECATION")
@@ -116,9 +117,11 @@ class CourseViewerActivity : AppCompatActivity() {
                 id_map_gpxViewer.controller.animateTo(course.centralPoint())
                 id_map_gpxViewer.zoomToBoundingBox(course.boundingBox(), true)
 
-                limitedGeoPoints = course.getPointEvery(4)
+                limitedGeoPoints = course.getPointEvery(1)//TODO cambiare con 4
 
                 button_blankMap.performClick()
+
+                text_distance.text = (round(course.distance * 100) / 100).toString()
             }
         }
 
