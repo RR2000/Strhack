@@ -15,8 +15,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.children
 import androidx.preference.PreferenceManager
 import com.rondinella.strhack.R
+import com.rondinella.strhack.databinding.ActivityCourseViewerBinding
+import com.rondinella.strhack.databinding.FragmentNewtrackBinding
 import com.rondinella.strhack.tracker.Course
-import kotlinx.android.synthetic.main.activity_course_viewer.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.Dispatchers.Main
@@ -35,7 +36,10 @@ import kotlin.math.round
 
 @Suppress("DEPRECATION")
 class CourseViewerActivity : AppCompatActivity() {
-
+    
+    private var _binding: ActivityCourseViewerBinding? = null
+    private val binding get() = _binding!!
+    
     fun getFileFromPath(file: File): ByteArray {
         val size = file.length().toInt()
         val bytes = ByteArray(size)
@@ -74,6 +78,7 @@ class CourseViewerActivity : AppCompatActivity() {
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if(requestCode == 42 && resultCode == 0)
             finish()
@@ -81,20 +86,21 @@ class CourseViewerActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        _binding = ActivityCourseViewerBinding.inflate(layoutInflater)
         setTheme(R.style.AppTheme_NoActionBar)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_course_viewer)
-        toolbar_course_viewer.setTitleTextColor(Color.WHITE)
+        binding.toolbarCourseViewer.setTitleTextColor(Color.WHITE)
 
         Configuration.getInstance().load(applicationContext, PreferenceManager.getDefaultSharedPreferences(applicationContext))
-        id_map_gpxViewer.visibility = View.INVISIBLE
-        loading_course_circle.visibility = View.VISIBLE
+        binding.idMapGpxViewer.visibility = View.INVISIBLE
+        binding.loadingCourseCircle.visibility = View.VISIBLE
 
         //It removes standard button in order to use touch controls
-        id_map_gpxViewer.setBuiltInZoomControls(false)
-        id_map_gpxViewer.setMultiTouchControls(true)
-        val overlayRotation = RotationGestureOverlay(applicationContext, id_map_gpxViewer).apply { isEnabled = true }
-        id_map_gpxViewer.overlays.add(overlayRotation)
+        binding.idMapGpxViewer.setBuiltInZoomControls(false)
+        binding.idMapGpxViewer.setMultiTouchControls(true)
+        val overlayRotation = RotationGestureOverlay(applicationContext, binding.idMapGpxViewer).apply { isEnabled = true }
+        binding.idMapGpxViewer.overlays.add(overlayRotation)
 
         lateinit var course: Course
         lateinit var limitedGeoPoints: ArrayList<GeoPoint>
@@ -106,26 +112,26 @@ class CourseViewerActivity : AppCompatActivity() {
 
         CoroutineScope(Main).launch {
             if (intent.action != Intent.ACTION_VIEW) {
-                toolbar_course_viewer.inflateMenu(R.menu.menu_course_viewer)
+                binding.toolbarCourseViewer.inflateMenu(R.menu.menu_course_viewer)
                 course = Course(File(getExternalFilesDir(null).toString() + "/tracks/" + intent.getStringExtra("filename")))
-                toolbar_course_viewer.title = intent.getStringExtra("title")
+                binding.toolbarCourseViewer.title = intent.getStringExtra("title")
             }
         }.invokeOnCompletion {
             CoroutineScope(Main).launch {
 
             }.invokeOnCompletion {
-                id_map_gpxViewer.controller.animateTo(course.centralPoint())
-                id_map_gpxViewer.zoomToBoundingBox(course.boundingBox(), true)
+                binding.idMapGpxViewer.controller.animateTo(course.centralPoint())
+                binding.idMapGpxViewer.zoomToBoundingBox(course.boundingBox(), true)
 
                 limitedGeoPoints = course.getPointEvery(1)//TODO cambiare con 4
 
-                button_blankMap.performClick()
+                binding.buttonBlankMap.performClick()
 
-                text_distance.text = (round(course.distance * 100) / 100).toString()
+                binding.textDistance.text = (round(course.distance * 100) / 100).toString()
             }
         }
 
-        toolbar_course_viewer.setOnMenuItemClickListener {
+        binding.toolbarCourseViewer.setOnMenuItemClickListener {
             if(it.itemId == R.id.button_remove_course) {
                 AlertDialog.Builder(this)
                     .setTitle(getString(R.string.delete_title))
@@ -142,28 +148,28 @@ class CourseViewerActivity : AppCompatActivity() {
             true
         }
 
-        button_blankMap.setOnClickListener {
+        binding.buttonBlankMap.setOnClickListener {
             CoroutineScope(Main).launch {
-                drawBlankMap(limitedGeoPoints, id_map_gpxViewer, loading_course_circle)
+                drawBlankMap(limitedGeoPoints, binding.idMapGpxViewer, binding.loadingCourseCircle)
             }
         }
 
-        button_slope.setOnClickListener {
+        binding.buttonSlope.setOnClickListener {
             CoroutineScope(Main).launch {
-                drawSlopeMap(limitedGeoPoints, id_map_gpxViewer, loading_course_circle)
+                drawSlopeMap(limitedGeoPoints, binding.idMapGpxViewer, binding.loadingCourseCircle)
             }
         }
 
-        button_altitude_difference.setOnClickListener {
+        binding.buttonAltitudeDifference.setOnClickListener {
             CoroutineScope(Main).launch {
-                drawAltitudeDifferenceMap(course, limitedGeoPoints, id_map_gpxViewer, loading_course_circle)
+                drawAltitudeDifferenceMap(course, limitedGeoPoints, binding.idMapGpxViewer, binding.loadingCourseCircle)
             }
         }
 
-        id_map_gpxViewer.setOnTouchListener { view, motionEvent ->
+        binding.idMapGpxViewer.setOnTouchListener { view, motionEvent ->
             when (motionEvent.action) {
-                MotionEvent.ACTION_DOWN -> scrollview_course_viewer.requestDisallowInterceptTouchEvent(true)
-                MotionEvent.ACTION_UP -> scrollview_course_viewer.requestDisallowInterceptTouchEvent(false)
+                MotionEvent.ACTION_DOWN -> binding.scrollviewCourseViewer.requestDisallowInterceptTouchEvent(true)
+                MotionEvent.ACTION_UP -> binding.scrollviewCourseViewer.requestDisallowInterceptTouchEvent(false)
             }
             view.onTouchEvent(motionEvent)
         }

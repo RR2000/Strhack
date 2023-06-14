@@ -1,9 +1,7 @@
 package com.rondinella.strhack.activities
 
 import android.os.Bundle
-import android.os.StrictMode
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.FragmentActivity
 import androidx.preference.PreferenceManager
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
@@ -11,44 +9,50 @@ import com.google.android.material.tabs.TabLayoutMediator
 import com.rondinella.strhack.R
 import com.rondinella.strhack.ui.main.SectionsPagerAdapter
 import com.rondinella.strhack.utils.askPermissions
+import com.rondinella.strhack.utils.disableSSLCertificateChecking
 import com.rondinella.strhack.utils.hasPermissions
 import org.osmdroid.config.Configuration
-
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        disableSSLCertificateChecking()
         setTheme(R.style.AppTheme_NoActionBar)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        //If the user didn't gave all permissions it asks for them again
-        (!hasPermissions(this))
+        if (!hasPermissions(this)) {
             askPermissions(this)
+        }
 
         val viewPager: ViewPager2 = findViewById(R.id.view_pager)
-        //create a new SectionPageAdapter for using it with viewPager
-        //SectionPageAdapter is a method of mine that instantiates fragments
-        val sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, FragmentActivity().lifecycle)
-        //set the adapter to the viewPage
+        val sectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager, this.lifecycle)
         viewPager.adapter = sectionsPagerAdapter
 
-        //Array of tab titles
-        val titles = ArrayList<String>()
-        titles.add(getString(R.string.new_course)) //Tab 0
-        titles.add(getString(R.string.my_courses)) //Tab 1
-        //Match each tab with a fragment
+        val titles = arrayListOf(
+            getString(R.string.new_course),  //Tab 0
+            getString(R.string.my_courses)   //Tab 1
+        )
+
         val tabs: TabLayout = findViewById(R.id.tabs)
         TabLayoutMediator(tabs, viewPager) { tab, position ->
             tab.text = titles[position]
             viewPager.setCurrentItem(tab.position, true)
         }.attach()
-        //Used to prevent blank map when go back from other fragment.
+
         viewPager.offscreenPageLimit = 1
 
-        //trying not to get error with sql things
-        val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
-        StrictMode.setThreadPolicy(policy)
-        Configuration.getInstance().load(applicationContext, PreferenceManager.getDefaultSharedPreferences(applicationContext))
+        val configuration = Configuration.getInstance()
+        val path: File = applicationContext.filesDir
+        val osmdroidBasePath = File(path, "osmdroid").apply { mkdirs() }
+        val osmdroidTilePath = File(osmdroidBasePath, "tiles").apply { mkdirs() }
+
+        configuration.apply {
+            osmdroidTileCache = osmdroidTilePath
+            load(applicationContext, PreferenceManager.getDefaultSharedPreferences(applicationContext))
+            userAgentValue = packageName
+        }
     }
 }

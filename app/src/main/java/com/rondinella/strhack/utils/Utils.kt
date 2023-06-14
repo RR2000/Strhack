@@ -1,12 +1,14 @@
 package com.rondinella.strhack.utils
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import com.example.strhack.AdvancedGeoPoint
@@ -16,12 +18,18 @@ import org.w3c.dom.Document
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
 import java.io.File
+import java.security.SecureRandom
+import java.security.cert.X509Certificate
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.collections.ArrayList
-
 
 private fun permissionList(): ArrayList<String> {
     val permissionsArray = arrayListOf<String>()
@@ -32,8 +40,6 @@ private fun permissionList(): ArrayList<String> {
     permissionsArray.add(Manifest.permission.ACCESS_FINE_LOCATION)
     permissionsArray.add(Manifest.permission.INTERNET)
     permissionsArray.add(Manifest.permission.ACCESS_NETWORK_STATE)
-    permissionsArray.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-    permissionsArray.add(Manifest.permission.READ_EXTERNAL_STORAGE)
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
         permissionsArray.add(Manifest.permission.FOREGROUND_SERVICE)
@@ -46,6 +52,7 @@ fun hasPermissions(activity: Activity): Boolean {
 
     for (i in 0 until permissionsArray.size) {
         if (ActivityCompat.checkSelfPermission(activity, permissionsArray[i]) != PackageManager.PERMISSION_GRANTED) {
+            Log.e("You don't have all permissions", permissionsArray[i])
             return false
         }
 
@@ -195,4 +202,34 @@ fun readAdvencedGeoPoints(file: File): ArrayList<AdvancedGeoPoint> {
         )
     }
     return mMap
+}
+
+fun disableSSLCertificateChecking() {
+    val trustAllCerts: Array<TrustManager> = arrayOf(object : X509TrustManager {
+        override fun getAcceptedIssuers(): Array<X509Certificate>? {
+            return null
+        }
+
+        override fun checkClientTrusted(certs: Array<X509Certificate>, authType: String) {
+            // No implementation needed
+        }
+
+        override fun checkServerTrusted(certs: Array<X509Certificate>, authType: String) {
+            // No implementation needed
+        }
+    })
+
+    try {
+        val sc: SSLContext = SSLContext.getInstance("TLS")
+        sc.init(null, trustAllCerts, SecureRandom())
+        HttpsURLConnection.setDefaultSSLSocketFactory(sc.socketFactory)
+
+        // Create all-trusting HostnameVerifier
+        val allHostsValid = HostnameVerifier { _, _ -> true }
+
+        // Install the all-trusting host verifier
+        HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid)
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
 }

@@ -1,14 +1,17 @@
 package com.rondinella.strhack.tracker
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Paint
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import com.rondinella.strhack.utils.convertLongToTime
 import com.google.android.gms.location.*
@@ -62,11 +65,9 @@ class TrackerService : Service() {
 
         track.line.outlinePaint.strokeCap = Paint.Cap.ROUND
         locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult?) {
+            override fun onLocationResult(p0: LocationResult) {
                 val builder: NotificationCompat.Builder? = createNotification(applicationContext, CHANNEL_ID, 0)
-
-                locationResult ?: return
-                for (location in locationResult.locations) {
+                for (location in p0.locations) {
                     builder?.setContentText("${convertLongToTime(location.time)}\nLONG: ${location.longitude}\nLAT: ${location.latitude}")!!
                     notificationManager.notify(NOTIFICATION_ID, builder.build())
 
@@ -76,11 +77,27 @@ class TrackerService : Service() {
         }
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        fusedLocationClient.requestLocationUpdates(
-            locationRequest,
-            locationCallback,
-            Looper.getMainLooper()
-        )
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
+        if (locationRequest != null) {
+            fusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                locationCallback,
+                Looper.getMainLooper()
+            )
+        }
 
     }
 

@@ -10,15 +10,19 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.rondinella.strhack.R
 import com.rondinella.strhack.activities.CourseViewerActivity
+import com.rondinella.strhack.databinding.FragmentNewtrackBinding
+import com.rondinella.strhack.databinding.FragmentRouteslistBinding
 import com.rondinella.strhack.utils.askPermissions
 import com.rondinella.strhack.utils.hasPermissions
-import kotlinx.android.synthetic.main.fragment_routeslist.*
 import java.io.File
 
 /**
  * A placeholder fragment containing a simple view.
  */
 class RoutesListFragment : Fragment() {
+
+    private var _binding: FragmentRouteslistBinding? = null
+    private val binding get() = _binding!!
 
     lateinit var parentActivity: Activity
     private var routesFilenameName = Pair<ArrayList<String>, ArrayList<String>>(ArrayList(), ArrayList())
@@ -27,9 +31,10 @@ class RoutesListFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val root = inflater.inflate(R.layout.fragment_routeslist, container, false)
-        parentActivity = activity!!
+    ): View {
+        _binding = FragmentRouteslistBinding.inflate(inflater, container, false)
+        val root: View = binding.root
+        parentActivity = requireActivity()
         return root
     }
 
@@ -37,6 +42,7 @@ class RoutesListFragment : Fragment() {
         refresh()
         super.onResume()
     }
+
     var gpxFiles = ArrayList<File>()
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -44,34 +50,35 @@ class RoutesListFragment : Fragment() {
 
 
         onClickListenerAdapter = View.OnClickListener {
-            val position = id_gpx_list.getChildLayoutPosition(it)
+            val position = binding.idGpxList.getChildLayoutPosition(it)
             val intent = Intent(context, CourseViewerActivity::class.java).apply {
                 putExtra("filename", gpxFiles[position].name)
-                putExtra("title", (id_gpx_list.adapter as RoutesListAdapter).getCourseTitle(position))
+                putExtra("title", (binding.idGpxList.adapter as RoutesListAdapter).getCourseTitle(position))
             }
             startActivity(intent)
         }
 
-        id_gpx_list.layoutManager = LinearLayoutManager(context)
+        binding.idGpxList.layoutManager = LinearLayoutManager(context)
 
         refresh()
 
-        gpx_list_container.setOnRefreshListener {
+        binding.gpxListContainer.setOnRefreshListener {
             refresh()
-            gpx_list_container.isRefreshing = false
+            binding.gpxListContainer.isRefreshing = false
         }
     }
+
     private fun refresh() {
 
         gpxFiles = ArrayList()
 
-        if (File(context!!.getExternalFilesDir(null).toString() + "/tracks").exists())
-            gpxFiles.addAll(File(context!!.getExternalFilesDir(null).toString() + "/tracks").listFiles()!!)
+        if (File(requireContext().getExternalFilesDir(null).toString() + "/tracks").exists())
+            gpxFiles.addAll(File(requireContext().getExternalFilesDir(null).toString() + "/tracks").listFiles()!!)
 
         gpxFiles.sortDescending()
 
         if (hasPermissions(parentActivity)) {
-            id_gpx_list.adapter = RoutesListAdapter(context, gpxFiles, onClickListenerAdapter)
+            binding.idGpxList.adapter = RoutesListAdapter(context, gpxFiles, onClickListenerAdapter)
         } else {
             askPermissions(parentActivity)
         }

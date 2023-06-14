@@ -5,10 +5,11 @@ import android.os.Bundle
 import android.util.Log
 import com.example.strhack.AdvancedGeoPoint
 import com.rondinella.strhack.R
+import com.rondinella.strhack.databinding.ActivityCourseEditorBinding
+import com.rondinella.strhack.databinding.ActivityCourseViewerBinding
 import com.rondinella.strhack.tracker.Course
 import com.rondinella.strhack.utils.convertLongToTime
 import com.rondinella.strhack.utils.writePointsOnFile
-import kotlinx.android.synthetic.main.activity_course_editor.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.delay
@@ -20,6 +21,9 @@ import kotlin.collections.ArrayList
 
 class CourseEditorActivity : AppCompatActivity() {
 
+    private var _binding: ActivityCourseEditorBinding? = null
+    private val binding get() = _binding!!
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_course_editor)
@@ -30,10 +34,10 @@ class CourseEditorActivity : AppCompatActivity() {
 
         val courseFile = File(pathFile)
 
-        title_edit.setText(title)
+        binding.titleEdit.setText(title)
 
-        button_confirm_edit.setOnClickListener {
-            val editedTitle = title_edit.text.toString()
+        binding.buttonConfirmEdit.setOnClickListener {
+            val editedTitle = binding.titleEdit.text.toString()
             val newFilename = courseFile.name.replace(".title.$title", ".title.$editedTitle")
 
             val newFile = File(getExternalFilesDir(null).toString() + "/tracks/" + newFilename)
@@ -42,7 +46,7 @@ class CourseEditorActivity : AppCompatActivity() {
                 newFile.createNewFile()
 
 
-            if (check_delete_pastrocchi.isChecked) {
+            if (binding.checkDeletePastrocchi.isChecked) {
                 initDeletePastrocchi(courseFile, 1)
             }
 
