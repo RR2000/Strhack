@@ -1,12 +1,10 @@
 package com.rondinella.strhack.tracker
 
 import android.util.Log
-import com.example.strhack.AdvancedGeoPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch
 import org.osmdroid.util.BoundingBox
-import org.osmdroid.util.Distance
 import org.osmdroid.util.GeoPoint
 import org.w3c.dom.Document
 import org.w3c.dom.Node
@@ -21,7 +19,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.collections.ArrayList
-import kotlin.properties.Delegates
 
 @Suppress("UNCHECKED_CAST")
 class Course() {

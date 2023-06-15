@@ -13,7 +13,7 @@ import java.lang.Exception
 import java.util.*
 
 class GpxFileWriter(context: Context, /*var*/ title: String = "") {
-    private val tracksLocation = File(context.getExternalFilesDir(null).toString() + "/tracks")
+    private val tracksLocation = File(context.filesDir.absolutePath + "/tracks")
     private var closed = false
     private lateinit var trackFile: File
     private lateinit var filename: String

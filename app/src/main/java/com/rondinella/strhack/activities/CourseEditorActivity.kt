@@ -3,10 +3,9 @@ package com.rondinella.strhack.activities
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import com.example.strhack.AdvancedGeoPoint
+import com.rondinella.strhack.tracker.AdvancedGeoPoint
 import com.rondinella.strhack.R
 import com.rondinella.strhack.databinding.ActivityCourseEditorBinding
-import com.rondinella.strhack.databinding.ActivityCourseViewerBinding
 import com.rondinella.strhack.tracker.Course
 import com.rondinella.strhack.utils.convertLongToTime
 import com.rondinella.strhack.utils.writePointsOnFile
@@ -15,8 +14,6 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
-import java.time.LocalDateTime
-import java.util.*
 import kotlin.collections.ArrayList
 
 class CourseEditorActivity : AppCompatActivity() {
@@ -28,7 +25,7 @@ class CourseEditorActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_course_editor)
 
-        val pathFile = getExternalFilesDir(null).toString() + "/tracks/" + intent.getStringExtra("filename")!!
+        val pathFile = applicationContext.filesDir.absolutePath + "/tracks/" + intent.getStringExtra("filename")!!
 
         val title = pathFile.substringAfter(".title.").substringBefore(".strhack.gpx")
 
@@ -40,7 +37,7 @@ class CourseEditorActivity : AppCompatActivity() {
             val editedTitle = binding.titleEdit.text.toString()
             val newFilename = courseFile.name.replace(".title.$title", ".title.$editedTitle")
 
-            val newFile = File(getExternalFilesDir(null).toString() + "/tracks/" + newFilename)
+            val newFile = File(applicationContext.filesDir.absolutePath + "/tracks/" + newFilename)
 
             if (!newFile.exists())
                 newFile.createNewFile()
@@ -103,7 +100,7 @@ class CourseEditorActivity : AppCompatActivity() {
             if(initialSize == geoPoints.size) {
                 writePointsOnFile(
                     geoPoints,
-                    applicationContext.getExternalFilesDir(null).toString() + "/tracks/date.${convertLongToTime(geoPoints[0].date.time).replace(
+                    applicationContext.applicationContext.filesDir.absolutePath + "/tracks/date.${convertLongToTime(geoPoints[0].date.time).replace(
                         ":",
                         "."
                     )}.title.opt.strhack.gpx"

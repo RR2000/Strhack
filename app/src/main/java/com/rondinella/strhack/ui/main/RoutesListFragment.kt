@@ -72,8 +72,8 @@ class RoutesListFragment : Fragment() {
 
         gpxFiles = ArrayList()
 
-        if (File(requireContext().getExternalFilesDir(null).toString() + "/tracks").exists())
-            gpxFiles.addAll(File(requireContext().getExternalFilesDir(null).toString() + "/tracks").listFiles()!!)
+        if (File(requireContext().filesDir.absolutePath + "/tracks").exists())
+            gpxFiles.addAll(File(requireContext().filesDir.absolutePath + "/tracks").listFiles()!!)
 
         gpxFiles.sortDescending()
 

@@ -1,7 +1,6 @@
 package com.rondinella.strhack.utils
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -11,7 +10,7 @@ import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
-import com.example.strhack.AdvancedGeoPoint
+import com.rondinella.strhack.tracker.AdvancedGeoPoint
 import com.rondinella.strhack.R
 import org.osmdroid.util.GeoPoint
 import org.w3c.dom.Document

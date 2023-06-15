@@ -1,4 +1,4 @@
-package com.example.strhack
+package com.rondinella.strhack.tracker
 
 import org.osmdroid.util.GeoPoint
 import java.util.*

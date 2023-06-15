@@ -12,34 +12,36 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.view.children
 import androidx.preference.PreferenceManager
+import com.google.android.gms.location.LocationServices
 import com.rondinella.strhack.R
 import com.rondinella.strhack.databinding.ActivityCourseViewerBinding
-import com.rondinella.strhack.databinding.FragmentNewtrackBinding
 import com.rondinella.strhack.tracker.Course
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.NonCancellable.cancel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import org.osmdroid.api.IMapController
 import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
+import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.io.*
 import kotlin.math.abs
 import kotlin.math.round
 
 
-@Suppress("DEPRECATION")
 class CourseViewerActivity : AppCompatActivity() {
-    
+
     private var _binding: ActivityCourseViewerBinding? = null
     private val binding get() = _binding!!
-    
+
     fun getFileFromPath(file: File): ByteArray {
         val size = file.length().toInt()
         val bytes = ByteArray(size)
@@ -80,27 +82,25 @@ class CourseViewerActivity : AppCompatActivity() {
 
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if(requestCode == 42 && resultCode == 0)
+        if (requestCode == 42 && resultCode == 0)
             finish()
         super.onActivityResult(requestCode, resultCode, data)
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onStart() {
+        super.onStart()
         _binding = ActivityCourseViewerBinding.inflate(layoutInflater)
         setTheme(R.style.AppTheme_NoActionBar)
-        super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_course_viewer)
         binding.toolbarCourseViewer.setTitleTextColor(Color.WHITE)
+        setContentView(binding.root)
+    }
 
-        Configuration.getInstance().load(applicationContext, PreferenceManager.getDefaultSharedPreferences(applicationContext))
-        binding.idMapGpxViewer.visibility = View.INVISIBLE
-        binding.loadingCourseCircle.visibility = View.VISIBLE
+    override fun onResume() {
+        super.onResume()
 
-        //It removes standard button in order to use touch controls
-        binding.idMapGpxViewer.setBuiltInZoomControls(false)
-        binding.idMapGpxViewer.setMultiTouchControls(true)
-        val overlayRotation = RotationGestureOverlay(applicationContext, binding.idMapGpxViewer).apply { isEnabled = true }
-        binding.idMapGpxViewer.overlays.add(overlayRotation)
+
+        Configuration.getInstance().load(baseContext, PreferenceManager.getDefaultSharedPreferences(baseContext))
 
         lateinit var course: Course
         lateinit var limitedGeoPoints: ArrayList<GeoPoint>
@@ -111,38 +111,40 @@ class CourseViewerActivity : AppCompatActivity() {
         }
 
         CoroutineScope(Main).launch {
-            if (intent.action != Intent.ACTION_VIEW) {
-                binding.toolbarCourseViewer.inflateMenu(R.menu.menu_course_viewer)
-                course = Course(File(getExternalFilesDir(null).toString() + "/tracks/" + intent.getStringExtra("filename")))
+            if (intent.action == Intent.ACTION_VIEW) {
+                course = Course(handleReceiveGpx(intent))
+                title = course.geoPoints()[0].date.toString()
+            } else {
+                course = Course(File(applicationContext.filesDir.absolutePath + "/tracks/" + intent.getStringExtra("filename")))
                 binding.toolbarCourseViewer.title = intent.getStringExtra("title")
             }
-        }.invokeOnCompletion {
-            CoroutineScope(Main).launch {
+            delay(1000)//TODO implement MVC
+            binding.idMapGpxViewer.controller.setZoom(15.0)
+            binding.idMapGpxViewer.controller.animateTo(course.centralPoint())
+            binding.idMapGpxViewer.zoomToBoundingBox(course.boundingBox(), true)
 
-            }.invokeOnCompletion {
-                binding.idMapGpxViewer.controller.animateTo(course.centralPoint())
-                binding.idMapGpxViewer.zoomToBoundingBox(course.boundingBox(), true)
+            limitedGeoPoints = course.getPointEvery(1)//TODO cambiare con 4
+            //Log.d("DEBUG", "Central Point: ${course.centralPoint()}")
+            //Log.d("DEBUG", "Bounding Box: ${course.boundingBox()}")
 
-                limitedGeoPoints = course.getPointEvery(1)//TODO cambiare con 4
+            binding.buttonBlankMap.performClick()
 
-                binding.buttonBlankMap.performClick()
+            binding.textDistance.text = (round(course.distance * 100) / 100).toString()
 
-                binding.textDistance.text = (round(course.distance * 100) / 100).toString()
-            }
         }
 
         binding.toolbarCourseViewer.setOnMenuItemClickListener {
-            if(it.itemId == R.id.button_remove_course) {
+            if (it.itemId == R.id.button_remove_course) {
                 AlertDialog.Builder(this)
                     .setTitle(getString(R.string.delete_title))
                     .setMessage(getString(R.string.delete_message))
                     .setPositiveButton(getString(R.string.delete)) { dialogInterface, i ->
-                        File(getExternalFilesDir(null).toString() + "/tracks/" + intent.getStringExtra("filename")).delete()
+                        File(applicationContext.filesDir.absolutePath + "/tracks/" + intent.getStringExtra("filename")).delete()
                         finish()//startActivity(Intent(this, MainActivity::class.java))
                     }.setNegativeButton(getString(R.string.cancel), null).show()
-            }else if(it.itemId == R.id.button_edit_course){
+            } else if (it.itemId == R.id.button_edit_course) {
                 val intentEditor = Intent(this, CourseEditorActivity::class.java)
-                intentEditor.putExtra("filename",intent.getStringExtra("filename"))
+                intentEditor.putExtra("filename", intent.getStringExtra("filename"))
                 startActivityForResult(intentEditor, 42)
             }
             true
@@ -176,26 +178,38 @@ class CourseViewerActivity : AppCompatActivity() {
     }
 
     private suspend fun drawBlankMap(geoPoints: ArrayList<GeoPoint>, map: MapView, loadingCourseCircle: ProgressBar) {
+        Log.d("DEBUG", "drawBlankMap started") // Add this
         map.overlayManager.removeAll(map.overlays)
 
         map.visibility = View.INVISIBLE
         loadingCourseCircle.visibility = View.VISIBLE
 
-        withContext(Default) {
-            for (i in 1 until geoPoints.size) {
-                val seg = Polyline()
-                seg.addPoint(geoPoints[i - 1])
-                seg.addPoint(geoPoints[i])
+        withContext(Dispatchers.IO) {
+            try {
+                for (i in 1 until geoPoints.size) {
+                    val seg = Polyline()
+                    seg.addPoint(geoPoints[i - 1])
+                    seg.addPoint(geoPoints[i])
 
-                seg.outlinePaint.strokeCap = Paint.Cap.ROUND
-                withContext(Main) {
-                    map.overlayManager.add(seg)
+                    seg.outlinePaint.strokeCap = Paint.Cap.ROUND
+                    withContext(Dispatchers.Main) {
+                        map.overlayManager.add(seg)
+                    }
                 }
+            } catch (e: Exception) {
+                Log.e("DEBUG", "Exception in coroutine", e)
             }
         }
 
+        Log.d("DEBUG", "drawBlankMap about to complete") // Add this
         map.visibility = View.VISIBLE
         loadingCourseCircle.visibility = View.INVISIBLE
+        Log.d("DEBUG", "drawBlankMap completed") // Add this
+
+        map.visibility = View.VISIBLE
+        map.invalidate()
+        loadingCourseCircle.visibility = View.INVISIBLE
+        loadingCourseCircle.invalidate()
     }
 
 
