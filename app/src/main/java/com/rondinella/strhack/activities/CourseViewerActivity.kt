@@ -58,8 +58,9 @@ class CourseViewerActivity : AppCompatActivity() {
     }
 
 
-    @Throws(IOException::class)
-    fun handleReceiveGpx(intent: Intent): String {
+    private fun handleReceiveGpx(intent: Intent): String {
+        val bytes: ByteArray
+
         val gpxUri: Uri = intent.data!!
         val file = File(cacheDir, "gpx")
         val inputStream: InputStream? = contentResolver.openInputStream(gpxUri)
@@ -74,16 +75,15 @@ class CourseViewerActivity : AppCompatActivity() {
             }
         } finally {
             inputStream?.close()
-            val bytes: ByteArray = getFileFromPath(file)
-
-            return String(bytes)
+            bytes = getFileFromPath(file)
         }
+
+        return String(bytes)
     }
 
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode == 42 && resultCode == 0)
-            finish()
+        if (requestCode == 42 && resultCode == 0) finish()
         super.onActivityResult(requestCode, resultCode, data)
     }
 
@@ -133,19 +133,24 @@ class CourseViewerActivity : AppCompatActivity() {
 
         }
 
+        binding.toolbarCourseViewer.setNavigationOnClickListener {
+            onBackPressed()
+        }
+
         binding.toolbarCourseViewer.setOnMenuItemClickListener {
-            if (it.itemId == R.id.button_remove_course) {
-                AlertDialog.Builder(this)
-                    .setTitle(getString(R.string.delete_title))
-                    .setMessage(getString(R.string.delete_message))
-                    .setPositiveButton(getString(R.string.delete)) { dialogInterface, i ->
-                        File(applicationContext.filesDir.absolutePath + "/tracks/" + intent.getStringExtra("filename")).delete()
-                        finish()//startActivity(Intent(this, MainActivity::class.java))
-                    }.setNegativeButton(getString(R.string.cancel), null).show()
-            } else if (it.itemId == R.id.button_edit_course) {
-                val intentEditor = Intent(this, CourseEditorActivity::class.java)
-                intentEditor.putExtra("filename", intent.getStringExtra("filename"))
-                startActivityForResult(intentEditor, 42)
+            when (it.itemId) {
+                R.id.button_remove_course -> {
+                    AlertDialog.Builder(this).setTitle(getString(R.string.delete_title)).setMessage(getString(R.string.delete_message))
+                        .setPositiveButton(getString(R.string.delete)) { dialogInterface, i ->
+                            File(applicationContext.filesDir.absolutePath + "/tracks/" + intent.getStringExtra("filename")).delete()
+                            finish()//startActivity(Intent(this, MainActivity::class.java))
+                        }.setNegativeButton(getString(R.string.cancel), null).show()
+                }
+                R.id.button_edit_course -> {
+                    val intentEditor = Intent(this, CourseEditorActivity::class.java)
+                    intentEditor.putExtra("filename", intent.getStringExtra("filename"))
+                    startActivityForResult(intentEditor, 42)
+                }
             }
             true
         }
@@ -230,8 +235,7 @@ class CourseViewerActivity : AppCompatActivity() {
 
                 var colorModifier: Int = (((geoPoints[i].altitude - minAltitude) / (maxAltitude - minAltitude)) * 255.0).toInt()
 
-                if (colorModifier > 255)
-                    colorModifier = 255
+                if (colorModifier > 255) colorModifier = 255
 
                 seg.outlinePaint.color = Color.rgb(colorModifier, 255 - colorModifier, 0)
                 seg.outlinePaint.strokeCap = Paint.Cap.ROUND
@@ -262,18 +266,13 @@ class CourseViewerActivity : AppCompatActivity() {
                 val altitude = seg.actualPoints.last().altitude - seg.actualPoints.first().altitude
                 val slope = altitude / distance * 100
 
-                var colorModifier = if (slope > 0)
-                    ((slope / 25.0) * 255.0).toInt()
-                else
-                    ((slope / 40.0) * 255.0).toInt()
+                var colorModifier = if (slope > 0) ((slope / 25.0) * 255.0).toInt()
+                else ((slope / 40.0) * 255.0).toInt()
 
-                if (colorModifier < -255)
-                    colorModifier = -255
-                if (colorModifier > 255)
-                    colorModifier = 255
+                if (colorModifier < -255) colorModifier = -255
+                if (colorModifier > 255) colorModifier = 255
 
-                if (slope >= 0)
-                    seg.outlinePaint.color = Color.rgb(colorModifier, 255 - colorModifier, 0)
+                if (slope >= 0) seg.outlinePaint.color = Color.rgb(colorModifier, 255 - colorModifier, 0)
                 else {
                     colorModifier = abs(colorModifier)
                     seg.outlinePaint.color = Color.rgb(0, 255 - colorModifier, colorModifier)

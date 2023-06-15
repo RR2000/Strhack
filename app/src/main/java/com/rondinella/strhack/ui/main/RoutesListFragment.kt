@@ -47,8 +47,6 @@ class RoutesListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-
-
         onClickListenerAdapter = View.OnClickListener {
             val position = binding.idGpxList.getChildLayoutPosition(it)
             val intent = Intent(context, CourseViewerActivity::class.java).apply {

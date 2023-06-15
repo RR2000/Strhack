@@ -3,6 +3,7 @@ package com.rondinella.strhack.activities
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import com.rondinella.strhack.tracker.AdvancedGeoPoint
 import com.rondinella.strhack.R
 import com.rondinella.strhack.databinding.ActivityCourseEditorBinding
@@ -23,7 +24,8 @@ class CourseEditorActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_course_editor)
+        _binding = ActivityCourseEditorBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         val pathFile = applicationContext.filesDir.absolutePath + "/tracks/" + intent.getStringExtra("filename")!!
 
@@ -34,29 +36,31 @@ class CourseEditorActivity : AppCompatActivity() {
         binding.titleEdit.setText(title)
 
         binding.buttonConfirmEdit.setOnClickListener {
-            val editedTitle = binding.titleEdit.text.toString()
-            val newFilename = courseFile.name.replace(".title.$title", ".title.$editedTitle")
+            val editedTitle: String = binding.titleEdit.text.toString()
+            val newFilename: String = courseFile.name.replace(".title.$title", ".title.$editedTitle")
 
             val newFile = File(applicationContext.filesDir.absolutePath + "/tracks/" + newFilename)
 
-            if (!newFile.exists())
+            if (!newFile.exists()) {
                 newFile.createNewFile()
+                if (binding.checkDeletePastrocchi.isChecked) {
+                    initDeletePastrocchi(courseFile, 1)
+                }
 
+                courseFile.renameTo(newFile)
+                //courseFile.copyTo(newFile)//TODO tester, i don't want to lose files
 
-            if (binding.checkDeletePastrocchi.isChecked) {
-                initDeletePastrocchi(courseFile, 1)
+                setResult(0)
+                finishActivity(42)
+                finish()
+            } else {
+                //TODO localize, should never happens but who knows
+                Toast.makeText(this, "Name already in use", Toast.LENGTH_SHORT).show()
             }
-
-            //courseFile.renameTo(newFile)
-            //courseFile.copyTo(newFile)//TODO tester, i don't want to lose files
-
-            setResult(0)
-            finishActivity(42)
-            finish()
         }
     }
 
-    private fun initDeletePastrocchi(courseFile: File, precision: Int){
+    private fun initDeletePastrocchi(courseFile: File, precision: Int) {
         CoroutineScope(IO).launch {
             val course = Course(courseFile)
             delay(5000)
@@ -97,17 +101,18 @@ class CourseEditorActivity : AppCompatActivity() {
 
             }
 
-            if(initialSize == geoPoints.size) {
+            if (initialSize == geoPoints.size) {
                 writePointsOnFile(
                     geoPoints,
-                    applicationContext.applicationContext.filesDir.absolutePath + "/tracks/date.${convertLongToTime(geoPoints[0].date.time).replace(
-                        ":",
-                        "."
-                    )}.title.opt.strhack.gpx"
+                    applicationContext.applicationContext.filesDir.absolutePath + "/tracks/date.${
+                        convertLongToTime(geoPoints[0].date.time).replace(
+                            ":",
+                            "."
+                        )
+                    }.title.opt.strhack.gpx"
                 )
                 Log.w("FINISHED", geoPoints.size.toString())
-            }
-            else
+            } else
                 deletePastrocchi(geoPoints, precision)
 
             Log.w("SIZE AT FINISH", geoPoints.size.toString())
