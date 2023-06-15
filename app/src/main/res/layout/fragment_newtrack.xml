@@ -17,11 +17,13 @@
         android:layout_marginEnd="10dp"
         android:layout_marginBottom="10dp"
         android:background="@drawable/circular_button"
+        android:contentDescription="@string/center_map"
         android:foreground="@drawable/center_map"
         android:foregroundGravity="center"
         android:textColor="#FFFFFF"
         app:layout_constraintBottom_toBottomOf="@+id/id_map"
-        app:layout_constraintEnd_toEndOf="@+id/id_map" /><!-- I have to check -->
+        app:layout_constraintEnd_toEndOf="@+id/id_map"
+        tools:ignore="VisualLintOverlap" /><!-- I have to check -->
 
     <org.osmdroid.views.MapView
         android:id="@+id/id_map"
@@ -46,6 +48,8 @@
         android:layout_height="100dp"
         android:background="@drawable/circular_button"
         android:text="@string/start_recording"
+        android:textColor="@color/white"
+        android:textSize="20sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

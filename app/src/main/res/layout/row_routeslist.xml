@@ -11,14 +11,14 @@
         android:id="@+id/routeName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="title"
+        android:text="@string/title"
         android:textSize="20sp" />
 
     <TextView
         android:id="@+id/routeDate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="date"
+        android:text="@string/date"
         android:textAlignment="textEnd"
         android:textSize="14sp" />
 

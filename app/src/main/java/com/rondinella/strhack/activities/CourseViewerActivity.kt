@@ -178,7 +178,7 @@ class CourseViewerActivity : AppCompatActivity() {
     }
 
     private suspend fun drawBlankMap(geoPoints: ArrayList<GeoPoint>, map: MapView, loadingCourseCircle: ProgressBar) {
-        Log.d("DEBUG", "drawBlankMap started") // Add this
+        Log.d("DEBUG", "drawBlankMap started")
         map.overlayManager.removeAll(map.overlays)
 
         map.visibility = View.INVISIBLE
@@ -201,10 +201,10 @@ class CourseViewerActivity : AppCompatActivity() {
             }
         }
 
-        Log.d("DEBUG", "drawBlankMap about to complete") // Add this
+        Log.d("DEBUG", "drawBlankMap about to complete")
         map.visibility = View.VISIBLE
         loadingCourseCircle.visibility = View.INVISIBLE
-        Log.d("DEBUG", "drawBlankMap completed") // Add this
+        Log.d("DEBUG", "drawBlankMap completed")
 
         map.visibility = View.VISIBLE
         map.invalidate()

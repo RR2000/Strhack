@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Strhack</string>
+    <string name="tab_text_1">Tab 1</string>
+    <string name="tab_text_2">Tab 2</string>
+    <string name="start_recording">Inizia</string>
+    <string name="stop_recording">Ferma</string>
+    <string name="center_map">Centra</string>
+    <string name="new_course">Nuovo giro</string>
+    <string name="my_courses">I miei giri</string>
+    <string name="blank_map">Semplice</string>
+    <string name="altitude_map">Altitudine</string>
+    <string name="altitude_difference_map">Dislivello</string>
+    <string name="slope_map">Pendenza</string>
+    <string name="course_of">Giro del</string>
+    <string name="at_time">alle</string>
+    <string name="strhack_is_recording">Strhack sta registrando…</string>
+    <string name="permits_error">Non riesco ad impostare i permessi! Impostali manualmente!</string>
+    <string name="remove_course">Rimuovi percorso</string>
+    <string name="edit_course">Modifica percorso</string>
+    <string name="delete_title">Che fai?</string>
+    <string name="delete_message">Sei sicuro di voler eliminare questo giro?</string>
+    <string name="delete">Elimina</string>
+    <string name="cancel">Annulla</string>
+    <string name="stop_recording_title">Che fai?</string>
+    <string name="stop_recording_message">Sei sicuro di voler terminare il giro?</string>
+    <string name="recording_in_progress">Registrazione del giro in corso…</string>
+    <string name="confirm_edit">Conferma modifiche</string>
+    <string name="title">Titolo</string>
+    <string name="date">Data</string>
+    <string name="distance_place_over">Distanza</string>
+    <string name="other_place_over">Altro</string>
+</resources>
