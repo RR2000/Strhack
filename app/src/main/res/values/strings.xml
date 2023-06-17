@@ -30,4 +30,6 @@
     <string name="distance_place_over">Distance</string>
     <string name="other_place_over">Other</string>
     <string name="tabs">Tabs</string>
+    <string name="average_speed_place_over">speed</string>
+    <string name="elevation_gain_place_over">elevation gain</string>
 </resources>

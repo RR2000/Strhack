@@ -129,7 +129,10 @@ class CourseViewerActivity : AppCompatActivity() {
 
             binding.buttonBlankMap.performClick()
 
-            binding.textDistance.text = (round(course.distance * 100) / 100).toString()
+            binding.textDistance.text = course.getDistance().toString() + " km"
+            binding.averageSpeed.text = course.getAverageSpeed().toString() + " km/h"
+            binding.totalTime.text = course.getTotalTime()
+            binding.elevationGain.text = course.getTotalElevationGain().toString() + " m"
 
         }
 

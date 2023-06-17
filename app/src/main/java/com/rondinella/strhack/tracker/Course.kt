@@ -17,8 +17,11 @@ import java.text.DateFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.TimeUnit
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.collections.ArrayList
+import kotlin.math.pow
+import kotlin.math.round
 
 @Suppress("UNCHECKED_CAST")
 class Course() {
@@ -73,6 +76,50 @@ class Course() {
     fun centralPoint(): GeoPoint {
         return centralPoint
     }
+
+    fun getDistance(precision: Int = 2): Double{
+        val precisionDouble = 10.0.pow(precision.toDouble())
+        return round((distance/1000) * precisionDouble) / precisionDouble
+    }
+    fun getAverageSpeed(precision: Int = 2): Double {
+        val precisionDouble = 10.0.pow(precision.toDouble())
+        val firstPoint: Date = geoPoints.first().date
+        val lastPoint: Date = geoPoints.last().date
+
+        val totalTime = ((lastPoint.time - firstPoint.time) / 1000.0) / 3600.0 // Time difference in hours
+        val totalDistance = distance / 1000.0 // Convert distance to kilometers
+
+        return if (totalTime != 0.0) {
+            round((totalDistance / totalTime) * precisionDouble) / precisionDouble
+        } else {
+            0.0
+        }
+    }
+    fun getTotalElevationGain(precision: Int = 2): Double {
+        var totalElevationGain = 0.0
+        for (i in 1 until geoPoints.size) {
+            val altitudeDifference = geoPoints[i].altitude - geoPoints[i - 1].altitude
+            if (altitudeDifference > 0) {
+                totalElevationGain += altitudeDifference
+            }
+        }
+
+        val precisionDouble = 10.0.pow(precision.toDouble())
+        return round(totalElevationGain * precisionDouble) / precisionDouble
+    }
+    fun getTotalTime(): String {
+        val firstPointTime: Date = geoPoints.first().date
+        val lastPointTime: Date = geoPoints.last().date
+
+        val totalTimeMillis = lastPointTime.time - firstPointTime.time
+
+        val hours = TimeUnit.MILLISECONDS.toHours(totalTimeMillis)
+        val minutes = TimeUnit.MILLISECONDS.toMinutes(totalTimeMillis) % 60
+        val seconds = TimeUnit.MILLISECONDS.toSeconds(totalTimeMillis) % 60
+
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+    }
+
 
     fun boundingBox(): BoundingBox {
         val padding = 0.0007

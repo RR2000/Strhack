@@ -7,6 +7,7 @@ import android.widget.Toast
 import com.rondinella.strhack.tracker.AdvancedGeoPoint
 import com.rondinella.strhack.R
 import com.rondinella.strhack.databinding.ActivityCourseEditorBinding
+import com.rondinella.strhack.databinding.ActivityCourseViewerBinding
 import com.rondinella.strhack.tracker.Course
 import com.rondinella.strhack.utils.convertLongToTime
 import com.rondinella.strhack.utils.writePointsOnFile
