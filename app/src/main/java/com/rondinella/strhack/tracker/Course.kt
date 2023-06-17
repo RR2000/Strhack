@@ -52,6 +52,7 @@ class Course() {
     }
 
     fun getPointEvery(mod: Int): ArrayList<GeoPoint> {
+        val newGeoPoints = geoPoints.filterIndexed { index, _ -> index % mod == 0 }
 
         val geoPointsResult = ArrayList<GeoPoint>()
 

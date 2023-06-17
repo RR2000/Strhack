@@ -57,24 +57,25 @@
                 style="?android:attr/buttonBarStyle">
 
                 <Button
-                    android:id="@+id/button_slope"
+                    android:id="@+id/button_blankMap"
                     style="@style/Widget.AppCompat.Button"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
                     android:layout_marginEnd="5dp"
                     android:layout_weight="1"
-                    android:text="@string/slope_map" />
+                    android:text="@string/blank_map" />
 
                 <Button
-                    android:id="@+id/button_blankMap"
+                    android:id="@+id/button_slope"
                     style="@style/Widget.AppCompat.Button"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"
                     android:layout_marginEnd="10dp"
                     android:layout_weight="1"
-                    android:text="@string/blank_map" />
+                    android:text="@string/slope_map" />
+
             </LinearLayout>
 
             <LinearLayout
@@ -93,19 +94,16 @@
                     android:layout_weight="1"
                     android:text="@string/altitude_difference_map" />
 
-                <!-- Add another Button here if needed -->
                 <Button
-                    android:id="@+id/button_2"
+                    android:id="@+id/button_speed"
                     style="@style/Widget.AppCompat.Button"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"
                     android:layout_marginEnd="10dp"
                     android:layout_weight="1"
-                    android:text="Button 2" />
+                    android:text="Speed TODO" />
             </LinearLayout>
-
-
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -166,6 +164,13 @@
                         android:text="@string/elevation_gain_place_over" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+            <!-- Just to make a bit of space so i can see the and
+             of the card view-->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="20dp"
+                tools:ignore="UselessLeaf">
+            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

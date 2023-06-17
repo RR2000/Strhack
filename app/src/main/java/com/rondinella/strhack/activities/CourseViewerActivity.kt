@@ -1,5 +1,6 @@
 package com.rondinella.strhack.activities
 
+import android.animation.ArgbEvaluator
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Paint
@@ -123,7 +124,7 @@ class CourseViewerActivity : AppCompatActivity() {
             binding.idMapGpxViewer.controller.animateTo(course.centralPoint())
             binding.idMapGpxViewer.zoomToBoundingBox(course.boundingBox(), true)
 
-            limitedGeoPoints = course.getPointEvery(1)//TODO cambiare con 4
+            limitedGeoPoints = course.getPointEvery(1)
             //Log.d("DEBUG", "Central Point: ${course.centralPoint()}")
             //Log.d("DEBUG", "Bounding Box: ${course.boundingBox()}")
 
@@ -192,37 +193,27 @@ class CourseViewerActivity : AppCompatActivity() {
         map.visibility = View.INVISIBLE
         loadingCourseCircle.visibility = View.VISIBLE
 
-        withContext(Dispatchers.IO) {
-            try {
-                for (i in 1 until geoPoints.size) {
-                    val seg = Polyline()
-                    seg.addPoint(geoPoints[i - 1])
-                    seg.addPoint(geoPoints[i])
+        val segments = withContext(Dispatchers.IO) {
+            geoPoints.windowed(2, 1).map { (start, end) ->
+                val seg = Polyline()
+                seg.addPoint(start)
+                seg.addPoint(end)
 
-                    seg.outlinePaint.strokeCap = Paint.Cap.ROUND
-                    withContext(Dispatchers.Main) {
-                        map.overlayManager.add(seg)
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("DEBUG", "Exception in coroutine", e)
+                seg.outlinePaint.strokeCap = Paint.Cap.ROUND
+                seg
             }
         }
-
-        Log.d("DEBUG", "drawBlankMap about to complete")
-        map.visibility = View.VISIBLE
-        loadingCourseCircle.visibility = View.INVISIBLE
-        Log.d("DEBUG", "drawBlankMap completed")
-
-        map.visibility = View.VISIBLE
-        map.invalidate()
-        loadingCourseCircle.visibility = View.INVISIBLE
-        loadingCourseCircle.invalidate()
+        withContext(Dispatchers.Main) {
+            map.overlayManager.addAll(segments)
+            map.visibility = View.VISIBLE
+            loadingCourseCircle.visibility = View.INVISIBLE
+        }
     }
 
 
     private suspend fun drawAltitudeDifferenceMap(course: Course, geoPoints: ArrayList<GeoPoint>, map: MapView, loadingCourseCircle: ProgressBar) {
-        map.overlayManager.clear()
+        Log.d("DEBUG", "drawAltitudeDifferenceMap started")
+        map.overlayManager.removeAll(map.overlays)
 
         val maxAltitude = course.maxAltitude()
         val minAltitude = course.minAltitude()
@@ -230,66 +221,79 @@ class CourseViewerActivity : AppCompatActivity() {
         map.visibility = View.INVISIBLE
         loadingCourseCircle.visibility = View.VISIBLE
 
-        withContext(Default) {
-            for (i in 1 until geoPoints.size) {
+        // Create a color interpolator for smoother transitions
+        val colorInterpolator = ArgbEvaluator()
+
+        val segments = withContext(Dispatchers.IO) {
+            geoPoints.windowed(2, 1).map { (start, end) ->
                 val seg = Polyline()
-                seg.addPoint(geoPoints[i - 1])
-                seg.addPoint(geoPoints[i])
+                seg.addPoint(start)
+                seg.addPoint(end)
 
-                var colorModifier: Int = (((geoPoints[i].altitude - minAltitude) / (maxAltitude - minAltitude)) * 255.0).toInt()
+                var altitudeRatio: Float = ((end.altitude - minAltitude) / (maxAltitude - minAltitude)).toFloat()
 
-                if (colorModifier > 255) colorModifier = 255
+                // Clamp ratio to 0..1 range just in case
+                altitudeRatio = altitudeRatio.coerceIn(0f, 1f)
+                val color = colorInterpolator.evaluate(altitudeRatio, Color.GREEN, Color.BLACK) as Int
 
-                seg.outlinePaint.color = Color.rgb(colorModifier, 255 - colorModifier, 0)
+                seg.outlinePaint.color = color
                 seg.outlinePaint.strokeCap = Paint.Cap.ROUND
-                withContext(Main) {
-                    map.overlayManager.add(seg)
-                }
+                seg
             }
         }
 
-        map.visibility = View.VISIBLE
-        loadingCourseCircle.visibility = View.INVISIBLE
+        withContext(Dispatchers.Main) {
+            map.overlayManager.addAll(segments)
+            map.visibility = View.VISIBLE
+            loadingCourseCircle.visibility = View.INVISIBLE
+        }
     }
 
+
     private suspend fun drawSlopeMap(geoPoints: ArrayList<GeoPoint>, map: MapView, loadingCourseCircle: ProgressBar) {
-        map.overlayManager.clear()
+        Log.d("DEBUG", "drawSlopeMap started")
+        map.overlayManager.removeAll(map.overlays)
 
         map.visibility = View.INVISIBLE
         loadingCourseCircle.visibility = View.VISIBLE
 
-        withContext(Default) {
-            for (i in 0 until geoPoints.size - 1) {
+        // Create three color interpolators for uphill, flat and downhill
+        val uphillSlopeColorInterpolator = ArgbEvaluator()
+        val downhillSlopeColorInterpolator = ArgbEvaluator()
+
+        val segments = withContext(Dispatchers.IO) {
+            geoPoints.windowed(2, 1).map { (start, end) ->
                 val seg = Polyline()
 
-                seg.addPoint(geoPoints[i])
-                seg.addPoint(geoPoints[i + 1])
+                seg.addPoint(start)
+                seg.addPoint(end)
 
-                val distance = seg.actualPoints.last().distanceToAsDouble(seg.actualPoints.first())
-                val altitude = seg.actualPoints.last().altitude - seg.actualPoints.first().altitude
-                val slope = altitude / distance * 100
-
-                var colorModifier = if (slope > 0) ((slope / 25.0) * 255.0).toInt()
-                else ((slope / 40.0) * 255.0).toInt()
-
-                if (colorModifier < -255) colorModifier = -255
-                if (colorModifier > 255) colorModifier = 255
-
-                if (slope >= 0) seg.outlinePaint.color = Color.rgb(colorModifier, 255 - colorModifier, 0)
-                else {
-                    colorModifier = abs(colorModifier)
-                    seg.outlinePaint.color = Color.rgb(0, 255 - colorModifier, colorModifier)
+                val distance = end.distanceToAsDouble(start)
+                val altitude = end.altitude - start.altitude
+                val slope = (altitude / distance) / 0.13 //13% slope is the darkest color
+                val color = when {
+                    slope > 0 -> {  // Uphill
+                        val slopeRatio = (slope).coerceIn(0.0, 1.0).toFloat()
+                        uphillSlopeColorInterpolator.evaluate(slopeRatio, Color.GREEN, Color.RED) as Int
+                    }
+                    else -> {  // Downhill
+                        val slopeRatio = (-slope).coerceIn(0.0, 1.0).toFloat()
+                        downhillSlopeColorInterpolator.evaluate(slopeRatio, Color.GREEN, Color.BLUE) as Int
+                    }
                 }
 
-
+                seg.outlinePaint.color = color
                 seg.outlinePaint.strokeCap = Paint.Cap.ROUND
-                withContext(Main) {
-                    map.overlayManager.add(seg)
-                }
+                seg
             }
         }
 
-        map.visibility = View.VISIBLE
-        loadingCourseCircle.visibility = View.INVISIBLE
+        withContext(Dispatchers.Main) {
+            map.overlayManager.addAll(segments)
+            map.refreshDrawableState()
+            loadingCourseCircle.visibility = View.INVISIBLE
+            map.visibility = View.VISIBLE
+        }
     }
+
 }
