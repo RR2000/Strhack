@@ -16,12 +16,15 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.view.children
 import androidx.preference.PreferenceManager
+import androidx.viewpager2.widget.ViewPager2
 import com.google.android.gms.location.LocationServices
 import com.rondinella.strhack.R
 import com.rondinella.strhack.databinding.ActivityCourseViewerBinding
+import com.rondinella.strhack.tracker.AdvancedGeoPoint
 import com.rondinella.strhack.tracker.Course
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.Default
+import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.NonCancellable.cancel
 import org.osmdroid.api.IMapController
@@ -104,7 +107,7 @@ class CourseViewerActivity : AppCompatActivity() {
         Configuration.getInstance().load(baseContext, PreferenceManager.getDefaultSharedPreferences(baseContext))
 
         lateinit var course: Course
-        lateinit var limitedGeoPoints: ArrayList<GeoPoint>
+        lateinit var limitedGeoPoints: ArrayList<AdvancedGeoPoint>
 
         if (intent.action == Intent.ACTION_VIEW) {
             course = Course(handleReceiveGpx(intent))
@@ -120,11 +123,36 @@ class CourseViewerActivity : AppCompatActivity() {
                 binding.toolbarCourseViewer.title = intent.getStringExtra("title")
             }
             delay(1000)//TODO implement MVC
+            binding.idMapGpxViewer.setBuiltInZoomControls(false)
+            binding.idMapGpxViewer.setMultiTouchControls(true)
+            val overlayRotation = RotationGestureOverlay(binding.idMapGpxViewer).apply { isEnabled = true }
+            binding.idMapGpxViewer.overlays.add(overlayRotation)
+
+            //Get controller of the map
             binding.idMapGpxViewer.controller.setZoom(15.0)
             binding.idMapGpxViewer.controller.animateTo(course.centralPoint())
             binding.idMapGpxViewer.zoomToBoundingBox(course.boundingBox(), true)
 
-            limitedGeoPoints = course.getPointEvery(1)
+            binding.idMapGpxViewer.setOnTouchListener { v, event ->
+                val viewPager = binding.scrollviewCourseViewer
+                when (event.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        viewPager.requestDisallowInterceptTouchEvent(true)
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        viewPager.requestDisallowInterceptTouchEvent(false)
+                        v.performClick()
+                    }
+                    MotionEvent.ACTION_CANCEL -> {
+                        viewPager.requestDisallowInterceptTouchEvent(false)
+                    }
+                }
+                false
+            }
+
+            withContext(IO) {
+                limitedGeoPoints = course.getPointEveryMeters(0.00001)
+            }
             //Log.d("DEBUG", "Central Point: ${course.centralPoint()}")
             //Log.d("DEBUG", "Bounding Box: ${course.boundingBox()}")
 
@@ -158,7 +186,6 @@ class CourseViewerActivity : AppCompatActivity() {
             }
             true
         }
-
         binding.buttonBlankMap.setOnClickListener {
             CoroutineScope(Main).launch {
                 drawBlankMap(limitedGeoPoints, binding.idMapGpxViewer, binding.loadingCourseCircle)
@@ -177,16 +204,9 @@ class CourseViewerActivity : AppCompatActivity() {
             }
         }
 
-        binding.idMapGpxViewer.setOnTouchListener { view, motionEvent ->
-            when (motionEvent.action) {
-                MotionEvent.ACTION_DOWN -> binding.scrollviewCourseViewer.requestDisallowInterceptTouchEvent(true)
-                MotionEvent.ACTION_UP -> binding.scrollviewCourseViewer.requestDisallowInterceptTouchEvent(false)
-            }
-            view.onTouchEvent(motionEvent)
-        }
     }
 
-    private suspend fun drawBlankMap(geoPoints: ArrayList<GeoPoint>, map: MapView, loadingCourseCircle: ProgressBar) {
+    private suspend fun drawBlankMap(geoPoints: ArrayList<AdvancedGeoPoint>, map: MapView, loadingCourseCircle: ProgressBar) {
         Log.d("DEBUG", "drawBlankMap started")
         map.overlayManager.removeAll(map.overlays)
 
@@ -211,12 +231,13 @@ class CourseViewerActivity : AppCompatActivity() {
     }
 
 
-    private suspend fun drawAltitudeDifferenceMap(course: Course, geoPoints: ArrayList<GeoPoint>, map: MapView, loadingCourseCircle: ProgressBar) {
+    private suspend fun drawAltitudeDifferenceMap(course: Course, geoPoints: ArrayList<AdvancedGeoPoint>, map: MapView, loadingCourseCircle: ProgressBar) {
         Log.d("DEBUG", "drawAltitudeDifferenceMap started")
         map.overlayManager.removeAll(map.overlays)
 
-        val maxAltitude = course.maxAltitude()
-        val minAltitude = course.minAltitude()
+        val maxAltitude = course.geoPoints().maxBy { it.altitude }.altitude
+        val minAltitude = course.geoPoints().minBy { it.altitude }.altitude
+
 
         map.visibility = View.INVISIBLE
         loadingCourseCircle.visibility = View.VISIBLE
@@ -250,34 +271,46 @@ class CourseViewerActivity : AppCompatActivity() {
     }
 
 
-    private suspend fun drawSlopeMap(geoPoints: ArrayList<GeoPoint>, map: MapView, loadingCourseCircle: ProgressBar) {
+    private suspend fun drawSlopeMap(geoPoints: ArrayList<AdvancedGeoPoint>, map: MapView, loadingCourseCircle: ProgressBar) {
         Log.d("DEBUG", "drawSlopeMap started")
         map.overlayManager.removeAll(map.overlays)
 
         map.visibility = View.INVISIBLE
         loadingCourseCircle.visibility = View.VISIBLE
 
-        // Create three color interpolators for uphill, flat and downhill
+        // Create two color interpolators for uphill and downhill
         val uphillSlopeColorInterpolator = ArgbEvaluator()
         val downhillSlopeColorInterpolator = ArgbEvaluator()
 
+        // The size of the window used for moving average
+        val windowSize = 10
+
+        val slopes = geoPoints.windowed(2, 1) { (start, end) ->
+            val distance = end.distanceToAsDouble(start)
+            val altitude = end.altitude - start.altitude
+            (altitude / distance) / 0.13  //13% slope is the darkest color
+        }
+
+        // Apply moving average to the slopes
+        val smoothedSlopes = slopes.windowed(windowSize, 1, partialWindows = true) { it.average() }
+
         val segments = withContext(Dispatchers.IO) {
-            geoPoints.windowed(2, 1).map { (start, end) ->
+            geoPoints.zip(smoothedSlopes).windowed(2, 1) { (pointWithSlope1, pointWithSlope2) ->
+                val (point1, slope1) = pointWithSlope1
+                val (point2, _) = pointWithSlope2
+
                 val seg = Polyline()
 
-                seg.addPoint(start)
-                seg.addPoint(end)
+                seg.addPoint(point1)
+                seg.addPoint(point2)
 
-                val distance = end.distanceToAsDouble(start)
-                val altitude = end.altitude - start.altitude
-                val slope = (altitude / distance) / 0.13 //13% slope is the darkest color
                 val color = when {
-                    slope > 0 -> {  // Uphill
-                        val slopeRatio = (slope).coerceIn(0.0, 1.0).toFloat()
+                    slope1 > 0 -> {  // Uphill
+                        val slopeRatio = slope1.coerceIn(0.0, 1.0).toFloat()
                         uphillSlopeColorInterpolator.evaluate(slopeRatio, Color.GREEN, Color.RED) as Int
                     }
                     else -> {  // Downhill
-                        val slopeRatio = (-slope).coerceIn(0.0, 1.0).toFloat()
+                        val slopeRatio = (-slope1).coerceIn(0.0, 1.0).toFloat()
                         downhillSlopeColorInterpolator.evaluate(slopeRatio, Color.GREEN, Color.BLUE) as Int
                     }
                 }

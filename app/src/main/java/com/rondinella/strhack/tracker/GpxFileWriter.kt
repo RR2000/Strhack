@@ -35,6 +35,7 @@ class GpxFileWriter(context: Context, /*var*/ title: String = "") {
             File(tracksLocation, filename).createNewFile()
             trackFile = File(tracksLocation, filename) //VORREI FARE UN FILE PARZIALE
 
+            Log.i("LOCATION", tracksLocation.canonicalPath)
             trackFile.appendText(
                 """
             <gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxx="http://www.garmin.com/xmlschemas/GpxExtensions/v3" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" creator="StrHack" version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd">

@@ -40,7 +40,7 @@
                 <org.osmdroid.views.MapView
                     android:id="@+id/id_map_gpxViewer"
                     android:layout_width="match_parent"
-                    android:layout_height="400dp" />
+                    android:layout_height="500dp" />
 
                 <ProgressBar
                     android:id="@+id/loading_course_circle"
@@ -168,7 +168,7 @@
              of the card view-->
             <LinearLayout
                 android:layout_width="wrap_content"
-                android:layout_height="20dp"
+                android:layout_height="2000dp"
                 tools:ignore="UselessLeaf">
             </LinearLayout>
         </LinearLayout>

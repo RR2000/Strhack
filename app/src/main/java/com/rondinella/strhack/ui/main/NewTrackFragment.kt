@@ -107,19 +107,25 @@ class NewTrackFragment : Fragment() {
         }
 
         var isRecording = false
-        binding.idMap.setOnTouchListener { _, motionEvent ->
+        binding.idMap.setOnTouchListener { v, event ->
             val viewPager = requireActivity().findViewById<ViewPager2>(R.id.view_pager)
-            when (motionEvent.action) {
+            when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     viewPager.isUserInputEnabled = false
                     followPosition = false
                 }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                MotionEvent.ACTION_UP -> {
+                    viewPager.isUserInputEnabled = true
+                    v.performClick()
+                }
+                MotionEvent.ACTION_CANCEL -> {
                     viewPager.isUserInputEnabled = true
                 }
             }
             false
         }
+
+
 
 
         binding.startStopButton.setOnClickListener {
