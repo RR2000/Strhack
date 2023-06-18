@@ -1,13 +1,11 @@
-package com.rondinella.strhack.activities
+package com.rondinella.strhack.ui.editor
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import com.rondinella.strhack.tracker.AdvancedGeoPoint
-import com.rondinella.strhack.R
 import com.rondinella.strhack.databinding.ActivityCourseEditorBinding
-import com.rondinella.strhack.databinding.ActivityCourseViewerBinding
 import com.rondinella.strhack.tracker.Course
 import com.rondinella.strhack.utils.convertLongToTime
 import com.rondinella.strhack.utils.writePointsOnFile

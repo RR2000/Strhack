@@ -1,4 +1,4 @@
-package com.rondinella.strhack.ui.main
+package com.rondinella.strhack.ui.main.routesList
 
 import android.app.Activity
 import android.content.Intent
@@ -8,9 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.rondinella.strhack.R
-import com.rondinella.strhack.activities.CourseViewerActivity
-import com.rondinella.strhack.databinding.FragmentNewtrackBinding
+import com.rondinella.strhack.ui.viewer.CourseViewerActivity
 import com.rondinella.strhack.databinding.FragmentRouteslistBinding
 import com.rondinella.strhack.utils.askPermissions
 import com.rondinella.strhack.utils.hasPermissions

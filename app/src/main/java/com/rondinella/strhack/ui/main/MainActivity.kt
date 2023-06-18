@@ -1,4 +1,4 @@
-package com.rondinella.strhack.activities
+package com.rondinella.strhack.ui.main
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
@@ -7,7 +7,6 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import com.rondinella.strhack.R
-import com.rondinella.strhack.ui.main.SectionsPagerAdapter
 import com.rondinella.strhack.utils.askPermissions
 import com.rondinella.strhack.utils.disableSSLCertificateChecking
 import com.rondinella.strhack.utils.hasPermissions

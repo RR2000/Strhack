@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:minWidth="100dp"
-    tools:context=".ui.main.RoutesListFragment">
+    tools:context=".ui.main.routesList.RoutesListFragment">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/id_gpx_list"

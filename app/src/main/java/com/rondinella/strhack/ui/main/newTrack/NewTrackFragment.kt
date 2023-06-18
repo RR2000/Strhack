@@ -1,4 +1,4 @@
-package com.rondinella.strhack.ui.main
+package com.rondinella.strhack.ui.main.newTrack
 
 import android.Manifest
 import android.app.Activity
@@ -14,7 +14,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
-import androidx.viewpager.widget.ViewPager
 import androidx.viewpager2.widget.ViewPager2
 
 import com.rondinella.strhack.tracker.TrackerService

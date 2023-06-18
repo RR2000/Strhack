@@ -1,44 +1,30 @@
-package com.rondinella.strhack.activities
+package com.rondinella.strhack.ui.viewer
 
 import android.animation.ArgbEvaluator
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Paint
 import android.net.Uri
-import android.os.Bundle
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.widget.ProgressBar
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContentProviderCompat.requireContext
-import androidx.core.view.children
 import androidx.preference.PreferenceManager
-import androidx.viewpager2.widget.ViewPager2
-import com.google.android.gms.location.LocationServices
 import com.rondinella.strhack.R
+import com.rondinella.strhack.ui.editor.CourseEditorActivity
 import com.rondinella.strhack.databinding.ActivityCourseViewerBinding
 import com.rondinella.strhack.tracker.AdvancedGeoPoint
 import com.rondinella.strhack.tracker.Course
 import kotlinx.coroutines.*
-import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
-import kotlinx.coroutines.NonCancellable.cancel
-import org.osmdroid.api.IMapController
 import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
-import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
-import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.io.*
-import kotlin.math.abs
-import kotlin.math.round
 
 
 class CourseViewerActivity : AppCompatActivity() {

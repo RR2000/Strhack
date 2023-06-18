@@ -1,4 +1,4 @@
-package com.rondinella.strhack.ui.main
+package com.rondinella.strhack.ui.main.routesList
 
 import android.content.Context
 import android.view.LayoutInflater

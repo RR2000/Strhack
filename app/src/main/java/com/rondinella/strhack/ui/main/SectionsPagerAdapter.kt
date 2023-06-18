@@ -3,6 +3,8 @@ package com.rondinella.strhack.ui.main
 import androidx.fragment.app.*
 import androidx.lifecycle.Lifecycle
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import com.rondinella.strhack.ui.main.newTrack.NewTrackFragment
+import com.rondinella.strhack.ui.main.routesList.RoutesListFragment
 import java.lang.Exception
 
 
