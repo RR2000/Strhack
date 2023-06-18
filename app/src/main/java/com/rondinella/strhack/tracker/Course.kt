@@ -1,9 +1,9 @@
 package com.rondinella.strhack.tracker
 
 import android.util.Log
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.Main
-import kotlinx.coroutines.launch
+import org.json.JSONObject
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.w3c.dom.Document
@@ -11,8 +11,15 @@ import org.w3c.dom.Node
 import org.w3c.dom.NodeList
 import org.xml.sax.InputSource
 import org.xml.sax.SAXParseException
+import java.io.BufferedReader
 import java.io.File
+import java.io.InputStreamReader
 import java.io.StringReader
+import java.lang.Double.min
+import java.lang.Integer.max
+import java.lang.Thread.sleep
+import java.net.HttpURLConnection
+import java.net.URL
 import java.text.DateFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -20,6 +27,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.collections.ArrayList
+import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.round
 
@@ -51,20 +59,78 @@ class Course() {
         return geoPoints
     }
 
-    fun getPointEvery(mod: Int): ArrayList<GeoPoint> {
-        val newGeoPoints = geoPoints.filterIndexed { index, _ -> index % mod == 0 }
+    suspend fun getElevationFromAPI(points: List<GeoPoint>): List<Double> {
+        val batchSize = 100
+        val elevations = mutableListOf<Double>()
 
-        val geoPointsResult = ArrayList<GeoPoint>()
+        for (i in points.indices step batchSize) {
+            val end = min(i + batchSize, points.size)
+            val batch = points.subList(i, end)
 
-        for (i in 0 until geoPoints.size)
-            if(i%mod==0)
+            val locations = batch.joinToString("|") { "${it.latitude},${it.longitude}" }
+            val url = URL("https://api.opentopodata.org/v1/eudem25m?locations=$locations")
+            val connection = url.openConnection() as HttpURLConnection
+
+            try {
+                BufferedReader(InputStreamReader(connection.inputStream)).use {
+                    val response = it.readText()
+                    val jsonObject = JSONObject(response)
+                    if (jsonObject.getString("status") == "OK") {
+                        val results = jsonObject.getJSONArray("results")
+                        for (j in 0 until results.length()) {
+                            val result = results.getJSONObject(j)
+                            (if (result.isNull("elevation")) null else result.getDouble("elevation"))?.let { it1 -> elevations.add(it1) }
+                        }
+                    } else {
+                        throw RuntimeException("API response status not OK")
+                    }
+                }
+            } finally {
+                connection.disconnect()
+            }
+        }
+
+        return elevations
+    }
+
+
+    suspend fun ArrayList<AdvancedGeoPoint>.correctAltitude(): ArrayList<AdvancedGeoPoint> = coroutineScope {
+        val deferred = async(Dispatchers.IO) {
+            getElevationFromAPI(this@correctAltitude)
+        }
+
+        val correctedAltitudes = deferred.await()
+        ArrayList(this@correctAltitude.zip(correctedAltitudes) { point, altitude ->
+            AdvancedGeoPoint(point.date, point.latitude, point.longitude, altitude)
+        })
+    }
+
+
+    suspend fun getPointEveryMeters(distanceMeters: Double): ArrayList<AdvancedGeoPoint> {
+        if (geoPoints.isEmpty()) {
+            return arrayListOf()
+        }
+
+        val geoPointsResult = ArrayList<AdvancedGeoPoint>()
+        var totalDistance = 0.0
+
+        geoPointsResult.add(geoPoints.first()) // add the first point
+
+        for (i in 1 until geoPoints.size) {
+            totalDistance += geoPoints[i].distanceToAsDouble(geoPoints[i - 1])
+
+            if (totalDistance >= distanceMeters) {
                 geoPointsResult.add(geoPoints[i])
+                totalDistance = 0.0
+            }
+        }
 
         Log.w("ORIGINAL SIZE", geoPoints.size.toString())
         Log.w("FINAL SIZE", geoPointsResult.size.toString())
 
-        return geoPointsResult
+        return geoPointsResult.correctAltitude()
     }
+
 
     fun maxAltitude(): Double {
         return highestPoint.altitude
@@ -78,10 +144,11 @@ class Course() {
         return centralPoint
     }
 
-    fun getDistance(precision: Int = 2): Double{
+    fun getDistance(precision: Int = 2): Double {
         val precisionDouble = 10.0.pow(precision.toDouble())
-        return round((distance/1000) * precisionDouble) / precisionDouble
+        return round((distance / 1000) * precisionDouble) / precisionDouble
     }
+
     fun getAverageSpeed(precision: Int = 2): Double {
         val precisionDouble = 10.0.pow(precision.toDouble())
         val firstPoint: Date = geoPoints.first().date
@@ -96,6 +163,7 @@ class Course() {
             0.0
         }
     }
+
     fun getTotalElevationGain(precision: Int = 2): Double {
         var totalElevationGain = 0.0
         for (i in 1 until geoPoints.size) {
@@ -108,6 +176,7 @@ class Course() {
         val precisionDouble = 10.0.pow(precision.toDouble())
         return round(totalElevationGain * precisionDouble) / precisionDouble
     }
+
     fun getTotalTime(): String {
         val firstPointTime: Date = geoPoints.first().date
         val lastPointTime: Date = geoPoints.last().date
@@ -181,8 +250,8 @@ class Course() {
                 )
 
                 val lastIndex = geoPoints.lastIndex
-                if(lastIndex > 0)
-                    distance += (geoPoints[lastIndex].distanceToAsDouble(geoPoints[lastIndex-1]))
+                if (lastIndex > 0)
+                    distance += (geoPoints[lastIndex].distanceToAsDouble(geoPoints[lastIndex - 1]))
 
                 val lastGeoPoint = geoPoints.last()
 
