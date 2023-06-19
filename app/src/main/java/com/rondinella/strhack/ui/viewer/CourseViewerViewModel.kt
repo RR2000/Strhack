@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import com.rondinella.strhack.tracker.Course
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.osmdroid.views.overlay.Polyline
 import java.io.*
@@ -25,9 +26,27 @@ class CourseViewerViewModel : ViewModel() {
     val segments: LiveData<List<Polyline>> = _segments
 
     fun loadCourse(file: File) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val course = Course(file)
+        viewModelScope.launch {
+            val course = Course()
+            course.initializeWithFile(file)
             _course.postValue(course)
+        }
+    }
+
+    fun correctAltitude() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val course = _course.value ?: return@launch
+            course.correctAltitude()
+            val segments = course.geoPoints().windowed(2, 1).mapNotNull { (start, end) ->
+                Polyline().apply {
+                    addPoint(start)
+                    addPoint(end)
+                    outlinePaint.strokeCap = Paint.Cap.ROUND
+                }
+            }
+            withContext(Dispatchers.Main) {
+                _segments.postValue(segments)
+            }
         }
     }
 
@@ -128,7 +147,7 @@ class CourseViewerViewModel : ViewModel() {
 
             val smoothedSpeeds = speeds.windowed(10, 1, true) { it.average() }
 
-            val maxSpeed = smoothedSpeeds.max() ?: 1.0
+            val maxSpeed = smoothedSpeeds.max()
             val minSpeed = smoothedSpeeds.minOrNull() ?: 0.0
 
             val segments = course.geoPoints().zip(smoothedSpeeds).windowed(2, 1).map { (pointWithSpeed1, pointWithSpeed2) ->

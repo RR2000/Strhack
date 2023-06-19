@@ -11,4 +11,9 @@
         android:icon="@drawable/permanent_delete"
         app:showAsAction="ifRoom"
         android:title="@string/remove_course"/>
+    <item
+        android:id="@+id/button_correct_altitude"
+        android:icon="@drawable/baseline_align_vertical_bottom_24"
+        app:showAsAction="ifRoom"
+        android:title="@string/remove_course"/>
 </menu>

@@ -55,6 +55,11 @@ class CourseViewerActivity : AppCompatActivity() {
                 when (item.itemId) {
                     R.id.button_remove_course -> confirmDeleteCourse()
                     R.id.button_edit_course -> openCourseEditor()
+                    R.id.button_correct_altitude -> {
+                        binding.idMapGpxViewer.visibility = View.INVISIBLE
+                        binding.loadingCourseCircle.visibility = View.VISIBLE
+                        courseViewModel.correctAltitude()
+                    }
                 }
                 true
             }

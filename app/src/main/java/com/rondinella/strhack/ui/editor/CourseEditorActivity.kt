@@ -61,7 +61,8 @@ class CourseEditorActivity : AppCompatActivity() {
 
     private fun initDeletePastrocchi(courseFile: File, precision: Int) {
         CoroutineScope(IO).launch {
-            val course = Course(courseFile)
+            val course = Course()
+            course.initializeWithFile(courseFile)
             delay(5000)
             deletePastrocchi(course.geoPoints(), precision)
         }

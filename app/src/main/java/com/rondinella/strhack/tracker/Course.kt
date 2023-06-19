@@ -27,9 +27,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.collections.ArrayList
-import kotlin.math.min
-import kotlin.math.pow
-import kotlin.math.round
+import kotlin.math.*
 
 @Suppress("UNCHECKED_CAST")
 class Course() {
@@ -42,16 +40,19 @@ class Course() {
     private var farEastPoint = -180.0
     private var highestPoint = GeoPoint(0.0, 0.0, -5000.0)
     private var lowestPoint = GeoPoint(0.0, 0.0, 5000.0)
-    private lateinit var centralPoint: GeoPoint
+    private var centralPoint: GeoPoint = GeoPoint(0.0, 0.0, 0.0)
 
     var distance: Double = 0.0
 
-    constructor(text: String) : this() {
+    init {
+
+    }
+
+    suspend fun initializeWithText(text: String) = withContext(Dispatchers.IO) {
         readPoints(text)
     }
 
-    constructor(gpxFile: File) : this() {
-        this.gpxFile = gpxFile
+    suspend fun initializeWithFile(gpxFile: File) = withContext(Dispatchers.IO) {
         readPoints(gpxFile)
     }
 
@@ -59,7 +60,7 @@ class Course() {
         return geoPoints
     }
 
-    suspend fun getElevationFromAPI(points: List<GeoPoint>): List<Double> {
+    suspend fun getElevationFromAPI(points: List<GeoPoint>): List<Double> = withContext(Dispatchers.IO) {
         val batchSize = 100
         val elevations = mutableListOf<Double>()
 
@@ -90,11 +91,10 @@ class Course() {
             }
         }
 
-        return elevations
+        return@withContext elevations
     }
 
-
-    suspend fun ArrayList<AdvancedGeoPoint>.correctAltitude(): ArrayList<AdvancedGeoPoint> = coroutineScope {
+    suspend fun ArrayList<AdvancedGeoPoint>.correctAltitude(): ArrayList<AdvancedGeoPoint> = withContext(Dispatchers.IO) {
         val deferred = async(Dispatchers.IO) {
             getElevationFromAPI(this@correctAltitude)
         }
@@ -104,7 +104,6 @@ class Course() {
             AdvancedGeoPoint(point.date, point.latitude, point.longitude, altitude)
         })
     }
-
 
     suspend fun getPointEveryMeters(distanceMeters: Double): ArrayList<AdvancedGeoPoint> {
         if (geoPoints.isEmpty()) {
@@ -164,6 +163,11 @@ class Course() {
         }
     }
 
+    suspend fun correctAltitude() = withContext(Dispatchers.IO) {
+        geoPoints = geoPoints.correctAltitude()
+        processGeoPoints()
+    }
+
     fun getTotalElevationGain(precision: Int = 2): Double {
         var totalElevationGain = 0.0
         for (i in 1 until geoPoints.size) {
@@ -196,81 +200,83 @@ class Course() {
         return BoundingBox(farNorthPoint + padding, farEastPoint + padding, farSouthPoint - padding, farWestPoint - padding)
     }
 
-    private fun readPoints(string: String) {
-        readPoints(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(InputSource(StringReader(string))))
-    }
-
-    private fun readPoints(file: File) {
+    private suspend fun readPoints(file: File) = withContext(Dispatchers.IO) {
         try {
-            readPoints(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file))
+            val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file)
+            readPoints(doc)
         } catch (e: SAXParseException) {
-            try {
-                file.appendText("</trk>\n</gpx>")
-                readPoints(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file))
-            } catch (e: SAXParseException) {
-                e.stackTrace
-            }
+            // Handle error appropriately
+            e.printStackTrace()
         }
     }
 
-    private fun readPoints(xmlDoc: Document) {
+    private suspend fun readPoints(string: String) = withContext(Dispatchers.IO) {
+        val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(InputSource(StringReader(string)))
+        readPoints(doc)
+    }
+
+    private suspend fun readPoints(xmlDoc: Document) = withContext(Dispatchers.IO) {
         xmlDoc.documentElement.normalize()
 
-        CoroutineScope(Main).launch {
-            val trackPointList: NodeList = xmlDoc.getElementsByTagName("trkpt")
+        val trackPointList: NodeList = xmlDoc.getElementsByTagName("trkpt")
+        val formats = listOf("yyyy-MM-dd'T'HH:mm:ss'Z'", "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        val formatter = SimpleDateFormat("", Locale.ITALIAN)
 
-            for (i in 0 until trackPointList.length) {
-                val point: Node = trackPointList.item(i)
+        for (i in 0 until trackPointList.length) {
+            val point: Node = trackPointList.item(i)
+            val children = point.childNodes
+            var altitude = 0.0
+            var date = Date()
 
-                var altitude = 0.0
-                var date = Date()
-                var formatter: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ITALIAN)
-
-                for (j in 1 until point.childNodes.length) {
-                    if (point.childNodes.item(j).nodeName == "ele") {
-                        altitude = point.childNodes.item(j).textContent.toDouble()
-                    }
-                    if (point.childNodes.item(j).nodeName == "time")
-                        try {
-                            date = formatter.parse(point.childNodes.item(j).textContent)!!
-                        } catch (e: ParseException) {
-                            formatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ITALIAN)
-                            date = formatter.parse(point.childNodes.item(j).textContent)!!
+            for (j in 1 until children.length) {
+                when (children.item(j).nodeName) {
+                    "ele" -> altitude = children.item(j).textContent.toDouble()
+                    "time" -> {
+                        for (format in formats) {
+                            formatter.applyPattern(format)
+                            try {
+                                date = formatter.parse(children.item(j).textContent)!!
+                                break
+                            } catch (e: ParseException) {
+                                continue
+                            }
                         }
-
+                    }
                 }
-
-                geoPoints.add(
-                    AdvancedGeoPoint(
-                        date,
-                        point.attributes.getNamedItem("lat").nodeValue.toDouble(),
-                        point.attributes.getNamedItem("lon").nodeValue.toDouble(),
-                        altitude
-                    )
-                )
-
-                val lastIndex = geoPoints.lastIndex
-                if (lastIndex > 0)
-                    distance += (geoPoints[lastIndex].distanceToAsDouble(geoPoints[lastIndex - 1]))
-
-                val lastGeoPoint = geoPoints.last()
-
-                farNorthPoint = if (lastGeoPoint.latitude > farNorthPoint) lastGeoPoint.latitude else farNorthPoint
-                farSouthPoint = if (lastGeoPoint.latitude < farSouthPoint) lastGeoPoint.latitude else farSouthPoint
-                farEastPoint = if (lastGeoPoint.longitude > farEastPoint) lastGeoPoint.longitude else farEastPoint
-                farWestPoint = if (lastGeoPoint.longitude < farWestPoint) lastGeoPoint.longitude else farWestPoint
-
-                if (lastGeoPoint.altitude < lowestPoint.altitude)
-                    lowestPoint = lastGeoPoint
-                if (lastGeoPoint.altitude > highestPoint.altitude)
-                    highestPoint = lastGeoPoint
             }
-        }.invokeOnCompletion {
-            val latitudeMid = (farNorthPoint + farSouthPoint) / 2.0
-            val longitudeMid = (farEastPoint + farWestPoint) / 2.0
-            centralPoint = GeoPoint(latitudeMid, longitudeMid)
+
+            val newPoint = AdvancedGeoPoint(
+                date,
+                point.attributes.getNamedItem("lat").nodeValue.toDouble(),
+                point.attributes.getNamedItem("lon").nodeValue.toDouble(),
+                altitude
+            )
+            geoPoints.add(newPoint)
+        }
+        // After parsing the XML, process the points
+        processGeoPoints()
+    }
+
+
+    private fun processGeoPoints() {
+        geoPoints.forEach { point ->
+            distance += if (geoPoints.last() != point)
+                point.distanceToAsDouble(geoPoints[geoPoints.indexOf(point) + 1])
+            else 0.0
+
+            farNorthPoint = max(farNorthPoint, point.latitude)
+            farSouthPoint = min(farSouthPoint, point.latitude)
+            farEastPoint = max(farEastPoint, point.longitude)
+            farWestPoint = min(farWestPoint, point.longitude)
+
+            if (point.altitude < lowestPoint.altitude) lowestPoint = point
+            if (point.altitude > highestPoint.altitude) highestPoint = point
         }
 
+        val latitudeMid = (farNorthPoint + farSouthPoint) / 2.0
+        val longitudeMid = (farEastPoint + farWestPoint) / 2.0
+        centralPoint = GeoPoint(latitudeMid, longitudeMid)
     }
+
 
 }
