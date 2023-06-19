@@ -11,7 +11,6 @@ import androidx.lifecycle.viewModelScope
 import com.rondinella.strhack.tracker.Course
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.osmdroid.views.overlay.Polyline
 import java.io.*
@@ -36,17 +35,8 @@ class CourseViewerViewModel : ViewModel() {
     fun correctAltitude() {
         viewModelScope.launch(Dispatchers.IO) {
             val course = _course.value ?: return@launch
-            course.correctAltitude()
-            val segments = course.geoPoints().windowed(2, 1).mapNotNull { (start, end) ->
-                Polyline().apply {
-                    addPoint(start)
-                    addPoint(end)
-                    outlinePaint.strokeCap = Paint.Cap.ROUND
-                }
-            }
-            withContext(Dispatchers.Main) {
-                _segments.postValue(segments)
-            }
+            course.correctElevation()
+            _course.postValue(course)
         }
     }
 
@@ -54,7 +44,7 @@ class CourseViewerViewModel : ViewModel() {
         Log.d("DEBUG", "drawBlankMap started")
 
         viewModelScope.launch(Dispatchers.IO) {
-            val segments = course.value?.geoPoints()?.windowed(2, 1)?.map { (start, end) ->
+            val segments = course.value?.getPoints()?.windowed(2, 1)?.map { (start, end) ->
                 val seg = Polyline().apply {
                     addPoint(start)
                     addPoint(end)
@@ -72,12 +62,12 @@ class CourseViewerViewModel : ViewModel() {
     fun drawAltitudeDifferenceMap() {
         viewModelScope.launch(Dispatchers.IO) {
             val course = _course.value ?: return@launch
-            val maxAltitude = course.geoPoints().maxByOrNull { it.altitude }?.altitude ?: 0.0
-            val minAltitude = course.geoPoints().minByOrNull { it.altitude }?.altitude ?: 0.0
+            val maxAltitude = course.getPoints().maxByOrNull { it.altitude }?.altitude ?: 0.0
+            val minAltitude = course.getPoints().minByOrNull { it.altitude }?.altitude ?: 0.0
 
             val colorInterpolator = ArgbEvaluator()
 
-            val segments = course.geoPoints().windowed(2, 1).mapNotNull { (start, end) ->
+            val segments = course.getPoints().windowed(2, 1).mapNotNull { (start, end) ->
                 val altitudeRatio = ((end.altitude - minAltitude) / (maxAltitude - minAltitude)).toFloat().coerceIn(0f, 1f)
                 val color = colorInterpolator.evaluate(altitudeRatio, Color.GREEN, Color.BLACK) as Int
 
@@ -99,7 +89,7 @@ class CourseViewerViewModel : ViewModel() {
             val uphillColorInterpolator = ArgbEvaluator()
             val downhillColorInterpolator = ArgbEvaluator()
 
-            val slopes = course.geoPoints().windowed(2, 1).map { (start, end) ->
+            val slopes = course.getPoints().windowed(2, 1).map { (start, end) ->
                 val distance = end.distanceToAsDouble(start)
                 val altitude = end.altitude - start.altitude
                 altitude / distance / 0.13
@@ -107,7 +97,7 @@ class CourseViewerViewModel : ViewModel() {
 
             val smoothedSlopes = slopes.windowed(10, 1, true) { it.average() }
 
-            val segments = course.geoPoints().zip(smoothedSlopes).windowed(2, 1).mapNotNull { (pointWithSlope1, pointWithSlope2) ->
+            val segments = course.getPoints().zip(smoothedSlopes).windowed(2, 1).mapNotNull { (pointWithSlope1, pointWithSlope2) ->
                 val (point1, slope1) = pointWithSlope1
                 val (point2, _) = pointWithSlope2
 
@@ -139,7 +129,7 @@ class CourseViewerViewModel : ViewModel() {
             val course = _course.value ?: return@launch
             val speedColorInterpolator = ArgbEvaluator()
 
-            val speeds = course.geoPoints().windowed(2, 1).map { (start, end) ->
+            val speeds = course.getPoints().windowed(2, 1).map { (start, end) ->
                 val distance = end.distanceToAsDouble(start)
                 val time = (end.date.time - start.date.time) / 1000
                 distance / time  // Assuming time is in seconds and distance in meters
@@ -150,12 +140,12 @@ class CourseViewerViewModel : ViewModel() {
             val maxSpeed = smoothedSpeeds.max()
             val minSpeed = smoothedSpeeds.minOrNull() ?: 0.0
 
-            val segments = course.geoPoints().zip(smoothedSpeeds).windowed(2, 1).map { (pointWithSpeed1, pointWithSpeed2) ->
+            val segments = course.getPoints().zip(smoothedSpeeds).windowed(2, 1).map { (pointWithSpeed1, pointWithSpeed2) ->
                 val (point1, speed1) = pointWithSpeed1
                 val (point2, _) = pointWithSpeed2
 
                 val speedRatio = ((speed1 - minSpeed) / (maxSpeed - minSpeed)).toFloat().coerceIn(0f, 1f)
-                val color = speedColorInterpolator.evaluate(speedRatio, Color.GREEN, Color.BLACK) as Int
+                val color = speedColorInterpolator.evaluate(speedRatio, Color.WHITE, Color.RED) as Int
 
                 Polyline().apply {
                     addPoint(point1)
@@ -164,7 +154,6 @@ class CourseViewerViewModel : ViewModel() {
                     outlinePaint.strokeCap = Paint.Cap.ROUND
                 }
             }
-
             _segments.postValue(segments)
         }
     }

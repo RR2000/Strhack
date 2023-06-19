@@ -64,7 +64,7 @@ class CourseEditorActivity : AppCompatActivity() {
             val course = Course()
             course.initializeWithFile(courseFile)
             delay(5000)
-            deletePastrocchi(course.geoPoints(), precision)
+            deletePastrocchi(course.getPoints(), precision)
         }
     }
 

@@ -2,7 +2,6 @@ package com.rondinella.strhack.tracker
 
 import android.util.Log
 import kotlinx.coroutines.*
-import kotlinx.coroutines.Dispatchers.Main
 import org.json.JSONObject
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
@@ -16,11 +15,8 @@ import java.io.File
 import java.io.InputStreamReader
 import java.io.StringReader
 import java.lang.Double.min
-import java.lang.Integer.max
-import java.lang.Thread.sleep
 import java.net.HttpURLConnection
 import java.net.URL
-import java.text.DateFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -56,15 +52,36 @@ class Course() {
         readPoints(gpxFile)
     }
 
-    fun geoPoints(): ArrayList<AdvancedGeoPoint> {
+    fun getPoints(): ArrayList<AdvancedGeoPoint> {
         return geoPoints
+    }
+
+    fun setPoints(geoPoints: ArrayList<AdvancedGeoPoint>) {
+        this.geoPoints.clear()
+        this.geoPoints.addAll(geoPoints)
+        clearCalculatedValues()
+        processGeoPoints()
+    }
+
+    private fun clearCalculatedValues() {
+        distance = 0.0
+        farNorthPoint = -90.0
+        farSouthPoint = 90.0
+        farWestPoint = 180.0
+        farEastPoint = -180.0
+        highestPoint = GeoPoint(0.0, 0.0, -5000.0)
+        lowestPoint = GeoPoint(0.0, 0.0, 5000.0)
+        centralPoint = GeoPoint(0.0, 0.0, 0.0)
     }
 
     suspend fun getElevationFromAPI(points: List<GeoPoint>): List<Double> = withContext(Dispatchers.IO) {
         val batchSize = 100
         val elevations = mutableListOf<Double>()
 
+        Log.i("Size", points.size.toString())
+
         for (i in points.indices step batchSize) {
+            Log.i("Calculating... ", i.toString())
             val end = min(i + batchSize, points.size)
             val batch = points.subList(i, end)
 
@@ -94,40 +111,57 @@ class Course() {
         return@withContext elevations
     }
 
-    suspend fun ArrayList<AdvancedGeoPoint>.correctAltitude(): ArrayList<AdvancedGeoPoint> = withContext(Dispatchers.IO) {
+    suspend fun ArrayList<AdvancedGeoPoint>.correctElevation(): ArrayList<AdvancedGeoPoint> = withContext(Dispatchers.IO) {
         val deferred = async(Dispatchers.IO) {
-            getElevationFromAPI(this@correctAltitude)
+            getElevationFromAPI(this@correctElevation)
         }
 
         val correctedAltitudes = deferred.await()
-        ArrayList(this@correctAltitude.zip(correctedAltitudes) { point, altitude ->
+        ArrayList(this@correctElevation.zip(correctedAltitudes) { point, altitude ->
             AdvancedGeoPoint(point.date, point.latitude, point.longitude, altitude)
         })
     }
+    fun ArrayList<AdvancedGeoPoint>.simplifyPath(tolerance: Double): ArrayList<AdvancedGeoPoint> {
+        val firstPoint = first()
+        val lastPoint = last()
+        if (size < 3) return arrayListOf(firstPoint, lastPoint)
 
-    suspend fun getPointEveryMeters(distanceMeters: Double): ArrayList<AdvancedGeoPoint> {
-        if (geoPoints.isEmpty()) {
-            return arrayListOf()
-        }
-
-        val geoPointsResult = ArrayList<AdvancedGeoPoint>()
-        var totalDistance = 0.0
-
-        geoPointsResult.add(geoPoints.first()) // add the first point
-
-        for (i in 1 until geoPoints.size) {
-            totalDistance += geoPoints[i].distanceToAsDouble(geoPoints[i - 1])
-
-            if (totalDistance >= distanceMeters) {
-                geoPointsResult.add(geoPoints[i])
-                totalDistance = 0.0
+        var maxDistance = 0.0
+        var index = 0
+        for (i in 1 until lastIndex) {
+            val point = this@simplifyPath[i]
+            val distance = point.perpendicularDistance(firstPoint, lastPoint)
+            if (distance > maxDistance) {
+                index = i
+                maxDistance = distance
             }
         }
 
-        Log.w("ORIGINAL SIZE", geoPoints.size.toString())
-        Log.w("FINAL SIZE", geoPointsResult.size.toString())
+        if (maxDistance > tolerance) {
+            val leftSubpath = ArrayList(subList(0, index + 1)).simplifyPath(tolerance)
+            val rightSubpath = ArrayList(subList(index, size)).simplifyPath(tolerance)
+            val result = leftSubpath
+            result.addAll(rightSubpath.drop(1))
+            return result
+        } else {
+            return arrayListOf(firstPoint, lastPoint)
+        }
+    }
 
-        return geoPointsResult.correctAltitude()
+    fun AdvancedGeoPoint.perpendicularDistance(linePoint1: AdvancedGeoPoint, linePoint2: AdvancedGeoPoint): Double {
+        val area = abs(
+            0.5 * (
+                    linePoint1.latitude * linePoint2.longitude +
+                            this.latitude * linePoint1.longitude +
+                            linePoint2.latitude * this.longitude -
+                            linePoint2.latitude * linePoint1.longitude -
+                            this.latitude * linePoint2.longitude -
+                            linePoint1.latitude * this.longitude)
+        )
+        val bottom = sqrt(
+            ((linePoint1.longitude - linePoint2.longitude).pow(2.0) + (linePoint1.latitude - linePoint2.latitude).pow(2.0))
+        )
+        return area / bottom * 2.0
     }
 
 
@@ -163,15 +197,17 @@ class Course() {
         }
     }
 
-    suspend fun correctAltitude() = withContext(Dispatchers.IO) {
-        geoPoints = geoPoints.correctAltitude()
+    suspend fun correctElevation() = withContext(Dispatchers.IO) {
+        geoPoints = geoPoints.correctElevation()
+        clearCalculatedValues()
         processGeoPoints()
     }
 
     fun getTotalElevationGain(precision: Int = 2): Double {
         var totalElevationGain = 0.0
-        for (i in 1 until geoPoints.size) {
-            val altitudeDifference = geoPoints[i].altitude - geoPoints[i - 1].altitude
+        val fewPoints = geoPoints.simplifyPath(0.001)
+        for (i in 1 until fewPoints.size) {
+            val altitudeDifference = fewPoints[i].altitude - fewPoints[i - 1].altitude
             if (altitudeDifference > 0) {
                 totalElevationGain += altitudeDifference
             }
