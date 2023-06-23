@@ -12,11 +12,11 @@ Moreover, I'm updating the code such that the app will be compatible with the la
 
 ## Screenshots
 
-<img src="https://github.com/RR2000/Strhack/assets/7381811/1736b6fc-9994-4708-9178-b1f3ddcf59db" width="500">
+<img src="https://github.com/RR2000/Strhack/assets/7381811/1736b6fc-9994-4708-9178-b1f3ddcf59db" width="250">
 
-<img src="https://github.com/RR2000/Strhack/assets/7381811/af557619-d1fb-4a90-bd31-d9a85d29d70a" width="500">
+<img src="https://github.com/RR2000/Strhack/assets/7381811/af557619-d1fb-4a90-bd31-d9a85d29d70a" width="250">
 
-<img src="https://github.com/RR2000/Strhack/assets/7381811/59710423-9a9a-472a-9a35-c481c406a2e6" width="500">
+<img src="https://github.com/RR2000/Strhack/assets/7381811/59710423-9a9a-472a-9a35-c481c406a2e6" width="250">
 
-<img src="https://github.com/RR2000/Strhack/assets/7381811/1badb4b0-fe0f-4ccb-978e-6e198805be98" width="500">
+<img src="https://github.com/RR2000/Strhack/assets/7381811/1badb4b0-fe0f-4ccb-978e-6e198805be98" width="250">
 
