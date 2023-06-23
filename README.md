@@ -7,5 +7,5 @@ In 2020, I started working on Strhack, an Android application. Strhack is a tool
 The project has now been revived, and several improvements are gonna be made to ensure its successful completion. One major issue identified was the lack of appropriate methodologies, such as Model-View-Controller (MVC), which led to codebase complexity.
 ( I was young, don't judge me :) )
 
-## To address this, I'm implementing the right architecture, making the codebase more modular and easier to maintain and extend.
+To address this, I'm implementing the right architecture, making the codebase more modular and easier to maintain and extend.
 Moreover, I'm updating the code such that the app will be compatible with the latest Android versions.
